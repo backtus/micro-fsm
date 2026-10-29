@@ -19,6 +19,10 @@ const dayNames = ['sön', 'mån', 'tis', 'ons', 'tors', 'fre', 'lör']
 export function dayName(iso: string): string {
   return dayNames[fromISO(iso).getDay()]
 }
+const fullDayNames = ['söndag', 'måndag', 'tisdag', 'onsdag', 'torsdag', 'fredag', 'lördag']
+export function fullDayName(iso: string): string {
+  return fullDayNames[fromISO(iso).getDay()]
+}
 export function formatDay(iso: string): string {
   const d = fromISO(iso)
   return `${dayName(iso)} ${d.getDate()}/${d.getMonth() + 1}`

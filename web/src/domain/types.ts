@@ -27,7 +27,8 @@ export interface Job {
   status: JobStatus
   actualHours?: number
   note?: string
-  hourlyRateOre: number
+  /** Consumer price per hour INCLUDING VAT, öre (prisinformationslagen: households see prices incl. moms) */
+  hourlyRateInclVatOre: number
   materialOre: number
   travelOre: number
 }

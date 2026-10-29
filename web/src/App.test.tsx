@@ -1,10 +1,9 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { toISO } from './domain/dates'
 import { norm, renderApp } from './test/helpers'
 
-const today = toISO(new Date())
+const today = '2026-10-29'
 
 describe('shell', () => {
   it('shows the prototype banner and resets demo data', async () => {
@@ -16,7 +15,7 @@ describe('shell', () => {
     expect(screen.getByText(/faktisk tid/)).toBeInTheDocument()
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     await user.click(screen.getByRole('button', { name: 'Återställ demo' }))
-    const jobs = JSON.parse(localStorage.getItem('micro-fsm-demo-v1')!).data.jobs as { date: string; status: string }[]
+    const jobs = JSON.parse(localStorage.getItem('micro-fsm-demo-v2')!).data.jobs as { date: string; status: string }[]
     expect(jobs.filter((j) => j.date === today && j.status === 'done')).toHaveLength(0)
   })
 })
@@ -104,7 +103,7 @@ describe('Vecka', () => {
     renderApp('/vecka')
     await user.click(screen.getByRole('button', { name: 'Ägare' }))
     await user.click(screen.getByRole('link', { name: 'Vecka' }))
-    await user.click(screen.getByRole('button', { name: /Flytta jobb Familjen Lindqvist 08:00/ }))
+    await user.click(screen.getByRole('button', { name: /^Familjen Lindqvist 08:00, Amina Hassan, .* – flytta$/ }))
     const dialog = screen.getByRole('dialog', { name: 'Flytta till…' })
     await user.selectOptions(within(dialog).getByLabelText('Medarbetare'), 's4')
     await user.click(within(dialog).getByRole('button', { name: 'Flytta' }))
@@ -122,7 +121,7 @@ describe('Vecka', () => {
     renderApp('/vecka')
     await user.click(screen.getByRole('button', { name: 'Ägare' }))
     await user.click(screen.getByRole('link', { name: 'Vecka' }))
-    await user.click(screen.getByRole('button', { name: /Flytta jobb Familjen Lindqvist 08:00/ }))
+    await user.click(screen.getByRole('button', { name: /^Familjen Lindqvist 08:00, Amina Hassan, .* – flytta$/ }))
     const target = screen.getAllByRole('option').map((o) => (o as HTMLOptionElement).value).filter((v) => /^\d{4}-/.test(v) && v !== today)[0]
     await user.selectOptions(screen.getByLabelText('Dag'), target)
     await user.click(screen.getByRole('button', { name: 'Flytta' }))
@@ -138,6 +137,10 @@ describe('Fakturaunderlag', () => {
     expect(text).toContain('-1 625 kr')
     expect(text).toContain('2 125 kr')
     expect(text).toContain('750 kr')
+    expect(text).toContain('Belopp exkl. moms')
+    expect(text).toContain('Belopp inkl. moms')
+    expect(text).toContain('812,50 kr/h inkl. moms')
+    expect(text).not.toContain('Öresavrundning')
     expect(text).toContain('ÅÅMMDD-XXXX')
     expect(text).toContain('max 75 000 kr/år')
     expect(text).toContain('endast kunden kan se det')
@@ -152,5 +155,72 @@ describe('Fakturaunderlag', () => {
     await user.click(screen.getByRole('link', { name: 'Fakturaunderlag' }))
     await user.click(screen.getAllByRole('link', { name: /Anders Forsberg/ })[0])
     expect(screen.getByText(/Ingen reskostnad/)).toBeInTheDocument()
+  })
+})
+
+describe('Vecka: tangentbord och dialog', () => {
+  const openSheet = async (user: ReturnType<typeof userEvent.setup>) => {
+    renderApp('/vecka')
+    await user.click(screen.getByRole('button', { name: 'Ägare' }))
+    const chip = screen.getByRole('button', { name: /^Familjen Lindqvist 08:00, Amina Hassan, torsdag – flytta$/ })
+    chip.focus()
+    await user.keyboard('{Enter}')
+    return chip
+  }
+
+  it('moves focus into the sheet, traps Tab, closes on Escape and restores focus', async () => {
+    const user = userEvent.setup()
+    const chip = await openSheet(user)
+    const dialog = screen.getByRole('dialog', { name: 'Flytta till…' })
+    expect(dialog).toContainElement(document.activeElement as HTMLElement)
+    // Tab around: stays inside the dialog
+    for (let i = 0; i < 6; i++) {
+      await user.tab()
+      expect(dialog).toContainElement(document.activeElement as HTMLElement)
+    }
+    await user.tab({ shift: true })
+    expect(dialog).toContainElement(document.activeElement as HTMLElement)
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(chip).toHaveFocus()
+  })
+
+  it('can reassign with the keyboard only', async () => {
+    const user = userEvent.setup()
+    await openSheet(user)
+    await user.selectOptions(screen.getByLabelText('Medarbetare'), 's2')
+    screen.getByRole('button', { name: 'Flytta' }).focus()
+    await user.keyboard('{Enter}')
+    expect(within(screen.getByTestId(`cell-s2-${today}`)).getByRole('button', { name: /^Familjen Lindqvist 08:00, Johan Berg, torsdag – flytta$/ })).toHaveFocus()
+  })
+})
+
+describe('Söndag / veckogräns', () => {
+  it('shows today on Sunday in the week that started Monday, with all views working', async () => {
+    vi.setSystemTime(new Date(2026, 10, 1, 12, 0, 0)) // Sunday 2026-11-01
+    const user = userEvent.setup()
+    renderApp('/dag')
+    expect(screen.getByText('Klart 0/3')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Ägare' }))
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Vecka 44')
+    const row = screen.getByTestId('row-s1')
+    const cells = within(row).getAllByTestId(/^cell-/)
+    expect(cells).toHaveLength(7)
+    expect(cells[0]).toHaveAttribute('data-testid', 'cell-s1-2026-10-26')
+    expect(cells[6]).toHaveAttribute('data-testid', 'cell-s1-2026-11-01')
+    expect(within(cells[6]).getAllByRole('button').length).toBeGreaterThan(0)
+    await user.click(screen.getByRole('button', { name: /Nästa/ }))
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Vecka 45')
+  })
+})
+
+describe('Öresavrundning', () => {
+  it('shows a rounding line and a whole-krona amount to pay when needed', async () => {
+    const user = userEvent.setup()
+    renderApp('/faktura')
+    await user.click(screen.getAllByRole('link', { name: /Anders Forsberg/ })[1])
+    const text = norm(document.body.textContent)
+    expect(text).toContain('Öresavrundning')
+    expect(text).not.toMatch(/Att betala[\d ]+,\d\d kr/)
   })
 })

@@ -49,13 +49,18 @@ export function InvoiceDetail() {
       </div>
       <div className="card">
         <table className={styles.table}>
+          <caption className="muted">Belopp i kronor. Priser till privatkund visas inklusive moms; underlaget räknar från priset exklusive moms.</caption>
           <tbody>
+            <tr className={styles.head}><th scope="colgroup" colSpan={2}>Belopp exkl. moms</th></tr>
             <tr><td>Arbete<br /><span className="muted">{desc('labour')}</span></td><td>{formatSek(amount('labour'))}</td></tr>
             <tr><td>Material</td><td>{formatSek(amount('material'))}</td></tr>
             <tr><td>Resa</td><td>{formatSek(amount('travel'))}</td></tr>
+            <tr><td>Summa exkl. moms</td><td>{formatSek(b.labourExVat + b.materialExVat + b.travelExVat)}</td></tr>
+            <tr className={styles.head}><th scope="colgroup" colSpan={2}>Belopp inkl. moms</th></tr>
             <tr><td>Moms {defaultConfig.vatRate * 100} %</td><td>{formatSek(b.vat)}</td></tr>
             <tr><td>Summa inkl. moms</td><td>{formatSek(b.totalInclVat)}</td></tr>
             <tr className={styles.rut}><td>RUT-avdrag ({defaultConfig.rutRate * 100} % av arbete inkl. moms {formatSek(b.labourInclVat)})</td><td>{formatSek(-b.rutAmount)}</td></tr>
+            {b.rounding !== 0 && <tr><td>Öresavrundning</td><td>{formatSek(b.rounding)}</td></tr>}
             <tr className={styles.total}><td>Att betala</td><td>{formatSek(b.customerPays)}</td></tr>
           </tbody>
         </table>

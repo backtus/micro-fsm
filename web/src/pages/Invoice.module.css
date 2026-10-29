@@ -4,3 +4,4 @@
 .total td { font-weight: 700; font-size: 1.1rem; border-bottom: 0; }
 .rut td:last-child { color: var(--c-ok); }
 .item { display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: inherit; min-height: 56px; }
+.head th { text-align: left; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--c-muted); padding-top: 0.75rem; }

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useReducer, type Dispatch, type R
 import { toISO } from '../domain/dates'
 import { initialState, reducer, type Action, type AppState } from './reducer'
 
-export const STORAGE_KEY = 'micro-fsm-demo-v1'
+export const STORAGE_KEY = 'micro-fsm-demo-v2'
 
 function load(): AppState {
   try {

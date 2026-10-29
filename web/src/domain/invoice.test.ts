@@ -10,7 +10,7 @@ describe('calculateInvoiceBasis', () => {
     const b = calculateInvoiceBasis([L('labour', 2600), L('material', 100), L('travel', 300)], defaultConfig)
     expect(b).toEqual({
       labourExVat: 260000, materialExVat: 10000, travelExVat: 30000,
-      vat: 75000, labourInclVat: 325000, rutAmount: 162500, totalInclVat: 375000, customerPays: 212500,
+      vat: 75000, labourInclVat: 325000, rutAmount: 162500, totalInclVat: 375000, rounding: 0, customerPays: 212500,
     })
   })
 
@@ -37,8 +37,21 @@ describe('calculateInvoiceBasis', () => {
     expect(b.vat).toBe(2508) // 2508.25
     expect(b.labourInclVat).toBe(12541)
     expect(b.rutAmount).toBe(6200) // 6270.5 öre -> 62 kr
-    expect(b.customerPays).toBe(6341)
+    expect(b.rounding).toBe(-41)
+    expect(b.customerPays).toBe(6300) // 63,41 kr -> 63 kr (öresavrundning)
     expect(Number.isInteger(b.vat) && Number.isInteger(b.customerPays)).toBe(true)
+  })
+
+  it('öresavrundning: amount to pay is whole kronor, rounded half up, with the difference exposed', () => {
+   
+    const b = calculateInvoiceBasis([{ kind: 'material', description: '', amountOre: 101780 }], defaultConfig)
+    expect(b.totalInclVat).toBe(127225)
+    expect(b.customerPays).toBe(127200)
+    expect(b.rounding).toBe(-25)
+    const up = calculateInvoiceBasis([{ kind: 'material', description: '', amountOre: 101800 }], defaultConfig)
+    expect(up.totalInclVat).toBe(127250)
+    expect(up.customerPays).toBe(127300)
+    expect(up.rounding).toBe(50)
   })
 
   it('reads rates from config, not literals (research §1 "Amounts": rates change by budget decision)', () => {

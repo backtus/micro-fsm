@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { addDays, formatDay, isoWeek, mondayOf, toISO } from '../domain/dates'
+import { useEffect, useRef, useState } from 'react'
+import { addDays, formatDay, fullDayName, isoWeek, mondayOf, toISO } from '../domain/dates'
 import { isOverdue } from '../domain/jobs'
 import type { Job } from '../domain/types'
 import { useAppState, useDispatch } from '../store/StoreContext'
@@ -15,8 +15,40 @@ export function WeekView() {
   const [moving, setMoving] = useState<Job | null>(null)
   const [toStaff, setToStaff] = useState(UNASSIGNED)
   const [toDate, setToDate] = useState('')
+  const sheetRef = useRef<HTMLDivElement>(null)
+  const lastJobId = useRef<string | null>(null)
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const rows = [...data.staff.map((s) => ({ id: s.id as string | null, name: s.name })), { id: null, name: 'Ej tilldelade' }]
+
+  // Focus management for the sheet: move focus in on open, restore to the job's chip on close.
+  const movingId = moving?.id ?? null
+  useEffect(() => {
+    if (movingId) {
+      lastJobId.current = movingId
+      sheetRef.current?.querySelector<HTMLElement>('select')?.focus()
+    } else if (lastJobId.current) {
+      document.querySelector<HTMLElement>(`[data-job-id="${lastJobId.current}"]`)?.focus()
+      lastJobId.current = null
+    }
+  }, [movingId])
+  const onSheetKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation()
+      setMoving(null)
+      return
+    }
+    if (e.key !== 'Tab') return
+    const items = Array.from(sheetRef.current!.querySelectorAll<HTMLElement>('select, button'))
+    const first = items[0]
+    const last = items[items.length - 1]
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
 
   const open = (j: Job) => {
     setMoving(j)
@@ -66,7 +98,8 @@ export function WeekView() {
                             key={j.id}
                             className={`${styles.chip} ${cls}`}
                             data-status={j.staffId === null ? 'unassigned' : isOverdue(j, today) ? 'overdue' : j.status}
-                            aria-label={`Flytta jobb ${c.name} ${j.startTime}`}
+                            data-job-id={j.id}
+                            aria-label={`${c.name} ${j.startTime}, ${j.staffId ? data.staff.find((s) => s.id === j.staffId)?.name : 'Ej tilldelad'}, ${fullDayName(j.date)} – flytta`}
                             onClick={() => open(j)}
                           >
                             <b>{j.startTime}</b>
@@ -84,7 +117,7 @@ export function WeekView() {
       </div>
       {moving && (
         <div className={styles.overlay} onClick={() => setMoving(null)}>
-          <div className={styles.sheet} role="dialog" aria-modal="true" aria-labelledby="sheet-title" onClick={(e) => e.stopPropagation()}>
+          <div ref={sheetRef} className={styles.sheet} role="dialog" aria-modal="true" aria-labelledby="sheet-title" onKeyDown={onSheetKeyDown} onClick={(e) => e.stopPropagation()}>
             <h2 id="sheet-title">Flytta till…</h2>
             <p className="muted">{data.customers.find((c) => c.id === moving.customerId)?.name} · {moving.startTime}</p>
             <label htmlFor="to-staff">Medarbetare</label>

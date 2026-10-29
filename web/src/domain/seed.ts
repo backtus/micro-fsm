@@ -86,7 +86,7 @@ export function createSeed(today: Date = new Date()): Data {
       tasks: t.tasks,
       status: past ? 'done' : 'planned',
       actualHours: past ? t.hours : undefined,
-      hourlyRateOre: 55000,
+      hourlyRateInclVatOre: 55000,
       materialOre: (t.materialKr ?? 80) * 100,
       travelOre: (t.travelKr ?? 250) * 100,
     }
@@ -115,7 +115,7 @@ export function createSeed(today: Date = new Date()): Data {
     tasks: TASKS.regular,
     status: 'done',
     actualHours: 4,
-    hourlyRateOre: 65000,
+    hourlyRateInclVatOre: 81250,
     materialOre: 10000,
     travelOre: 30000,
   })
