@@ -55,7 +55,7 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 
 - **Decision:** Personnummer and access notes encrypted in the application with one KMS customer-managed key (envelope encryption); keyed hash (HMAC) for lookup.
 - **Context:** Personnummer is sensitive; DSQL lacks pgcrypto.
-- **Alternatives:** database-level encryption only (unavailable on DSQL).
+- **Alternatives:** DSQL-managed encryption at rest only (rejected: personnummer and access notes also require application-level encryption).
 - **Consequences:** ~$1/month fixed cost per key.
 
 ## 2026-10-29 — Front end, IaC, CI

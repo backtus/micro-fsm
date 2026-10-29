@@ -54,6 +54,8 @@ All need validation; 1 and 2 are the strongest bets.
 
 ## 5. MVP scope
 
+**Segment order:** home cleaning first, then move-out cleaning (flyttstädning), then possibly moving.
+
 **In**
 
 - **Login:** company account; roles owner/admin and field worker. Field workers use a magic link (SMS or e-mail).

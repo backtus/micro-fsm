@@ -308,7 +308,7 @@ Only Sweden uses the model where the company invoices net of the deduction and c
 
 ### Recommendation
 
-> **Superseded by DECISIONS.md 2026-10-29 Product scope:** the MVP includes RUT XML-file generation (Begaran.xsd v6), payment tracking and the 31 Jan reminder. The Fortnox integration is the first post-MVP item, not an MVP item, and Spiris comes later. Where the list below conflicts, DECISIONS.md wins.
+> **Superseded by DECISIONS.md 2026-10-29 Product scope and docs/product/brief.md §5:** quotes are out of MVP (invoices only). The MVP includes RUT XML-file generation (Begaran.xsd v6), payment tracking and the 31 Jan reminder. The Fortnox integration is the first post-MVP item, not an MVP item, and Spiris comes later. Where the list below conflicts, DECISIONS.md wins.
 
 - **MVP**
   - Correct RUT-ready quotes and invoices (the split, buyers and actual hours).
