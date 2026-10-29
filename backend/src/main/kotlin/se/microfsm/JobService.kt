@@ -2,14 +2,23 @@ package se.microfsm
 
 import io.quarkus.narayana.jta.QuarkusTransaction
 import jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.inject.Produces
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import jakarta.ws.rs.NotFoundException
 import java.time.LocalDate
 import java.util.UUID
 
+class OccConfig {
+    @Produces
+    @Singleton
+    fun occRetry(): OccRetry = OccRetry()
+}
+
 @ApplicationScoped
 class JobService @Inject constructor(
     private val repo: JobRepository,
+    private val occRetry: OccRetry,
 ) {
     fun create(tenant: UUID, req: CreateJobRequest): Job = tx {
         val job = Job(tenant, req.customerName, req.address, req.scheduledDate)
@@ -20,6 +29,16 @@ class JobService @Inject constructor(
     fun get(tenant: UUID, id: UUID): Job = tx { find(tenant, id) }
 
     fun list(tenant: UUID, date: LocalDate): List<Job> = tx { repo.list("tenantId = ?1 and scheduledDate = ?2 order by createdAt", tenant, date) }
+
+    /** Transaction is opened inside the retry loop so each attempt starts from a fresh snapshot. */
+    fun complete(tenant: UUID, id: UUID, minutes: Int): Job = occRetry.run {
+        tx {
+            val job = find(tenant, id)
+            job.status = JobStatus.DONE
+            job.actualMinutes = minutes
+            job
+        }
+    }
 
     private fun find(tenant: UUID, id: UUID): Job =
         repo.find("id = ?1 and tenantId = ?2", id, tenant).firstResult() ?: throw NotFoundException()

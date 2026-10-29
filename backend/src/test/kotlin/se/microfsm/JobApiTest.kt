@@ -54,6 +54,8 @@ class JobApiTest {
     fun `other tenant gets 404`() {
         val id = create(UUID.randomUUID())
         given().header("X-Tenant-Id", UUID.randomUUID().toString()).get("/jobs/$id").then().statusCode(404)
+        given().header("X-Tenant-Id", UUID.randomUUID().toString()).contentType(ContentType.JSON)
+            .body("""{"actualMinutes":5}""").post("/jobs/$id/complete").then().statusCode(404)
     }
 
     @Test
@@ -67,5 +69,14 @@ class JobApiTest {
     @Test
     fun `invalid date gives 400`() {
         given().header("X-Tenant-Id", UUID.randomUUID().toString()).get("/jobs?date=2026-13-45").then().statusCode(400)
+    }
+
+    @Test
+    fun `complete sets status and minutes`() {
+        val tenant = UUID.randomUUID()
+        val id = create(tenant)
+        given().header("X-Tenant-Id", tenant.toString()).contentType(ContentType.JSON).body("""{"actualMinutes":95}""")
+            .post("/jobs/$id/complete").then().statusCode(200)
+            .body("status", equalTo("DONE")).body("actualMinutes", equalTo(95)).body("version", equalTo(1))
     }
 }

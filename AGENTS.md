@@ -21,5 +21,6 @@ Read `docs/STATE.md` first. Decisions in `docs/DECISIONS.md`, priorities in `doc
   - `./gradlew build` — compile, test and package all JVM modules; Lambda zip at `backend/build/function.zip`.
   - `./gradlew :backend:test` — needs a container runtime (Quarkus Dev Services starts Postgres).
   - `./gradlew :backend:quarkusDev` — local dev with Dev Services Postgres.
+  - Package for Aurora DSQL: `QUARKUS_PROFILE=dsql ./gradlew :backend:quarkusBuild` (the JDBC driver is a build-time setting).
   - **Podman** (no Docker): before running tests/dev, `export DOCKER_HOST=unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')` and `export TESTCONTAINERS_RYUK_DISABLED=true`. `podman` is at `/opt/podman/bin`; the machine must be running (`podman machine start`).
-- Backend notes: tenant comes from the `X-Tenant-Id` header (spike); migrations are one DDL each (`MigrationLintTest` enforces DSQL rules).
+- Backend notes: tenant comes from the `X-Tenant-Id` header (spike); migrations are one DDL each (`MigrationLintTest` enforces DSQL rules); retries on SQLSTATE 40001 go through `OccRetry` with the transaction inside the retry loop; in dev/test the Lambda HTTP mock serializes HTTP requests, so concurrency tests call the service layer.

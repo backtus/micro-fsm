@@ -11,12 +11,16 @@ import jakarta.ws.rs.Produces
 import jakarta.ws.rs.QueryParam
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
+import jakarta.ws.rs.ext.ExceptionMapper
+import jakarta.ws.rs.ext.Provider
 import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 import java.util.UUID
 
 data class CreateJobRequest(val customerName: String, val address: String, val scheduledDate: LocalDate)
+
+data class CompleteJobRequest(val actualMinutes: Int)
 
 data class JobDto(
     val id: UUID,
@@ -30,6 +34,12 @@ data class JobDto(
 )
 
 fun Job.toDto() = JobDto(id!!, customerName, address, scheduledDate, status, actualMinutes, version, createdAt)
+
+@Provider
+class OccExhaustedMapper : ExceptionMapper<OccExhaustedException> {
+    override fun toResponse(e: OccExhaustedException): Response =
+        Response.status(Response.Status.CONFLICT).entity(mapOf("error" to "conflict, retry later")).build()
+}
 
 @Path("/jobs")
 @Produces(MediaType.APPLICATION_JSON)
@@ -58,6 +68,18 @@ class JobResource(private val service: JobService) {
             throw BadRequestException("date must be YYYY-MM-DD")
         }
         return service.list(tenant, day).map { it.toDto() }
+    }
+
+    @POST
+    @Path("/{id}/complete")
+    fun complete(
+        @HeaderParam("X-Tenant-Id") tenantHeader: String?,
+        @PathParam("id") id: UUID,
+        req: CompleteJobRequest,
+    ): JobDto {
+        val tenant = tenant(tenantHeader)
+        if (req.actualMinutes < 0) throw BadRequestException("actualMinutes must be >= 0")
+        return service.complete(tenant, id, req.actualMinutes).toDto()
     }
 
     private fun tenant(header: String?): UUID =

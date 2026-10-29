@@ -19,10 +19,11 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
   - `quarkus-hibernate-orm-panache-kotlin` — persistence (repository style).
   - `quarkus-jdbc-postgresql` — PostgreSQL driver / Dev Services (DSQL is PG-compatible).
   - `quarkus-flyway`, `quarkus-flyway-postgresql` — migrations (Flyway 12; PostgreSQL module needed for Flyway's PG support).
+  - `software.amazon.dsql:aurora-dsql-jdbc-connector:1.5.1` — official pgJDBC wrapper that generates IAM tokens per connection (`jdbc:aws-dsql:postgresql://…`, driver `software.amazon.dsql.jdbc.DSQLConnector`); no password anywhere.
   - Test only: `quarkus-junit`, `rest-assured`, `assertj-core`.
 - **Context:** A1 spike; DSQL decision depends on this skeleton working.
 - **Alternatives:** Java 21 (older LTS); in-house UUIDv7 generator (unneeded); AWS Advanced JDBC Wrapper DSQL plugin (heavier).
-- **Consequences:** Flyway's PostgreSQL transactional lock is turned off and `${index_async}` is supplied by a `FlywayConfigurationCustomizer` (a Quarkus property cannot hold an empty value).
+- **Consequences:** `%dsql` driver and Hibernate offline-start settings are build-time, so the deployable package must be built with `QUARKUS_PROFILE=dsql`. Flyway's PostgreSQL transactional lock is turned off and `${index_async}` is supplied by a `FlywayConfigurationCustomizer` (a Quarkus property cannot hold an empty value). OCC retry is a ~50-line in-house class (3 attempts, jittered backoff) instead of the connector's `OCCRetry`, which is not Hibernate/JTA-transaction aware.
 
 ## 2026-10-29 — Personal data inventory
 
