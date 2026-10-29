@@ -2,6 +2,13 @@
 
 Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 
+## 2026-10-29 — Sweden head-on paused; investigate Norway
+
+- **Decision:** Stop building toward a head-on Swedish launch. Research Norway (cleaning + window cleaning) before further build or AWS spend.
+- **Context:** Wisegent (Märsta, since 2016) already offers our full Swedish MVP and more (RUT XML, Fortnox partner, native apps, customer portal, autogiro) from 199 SEK/month; Upflow covers the same niche. Kent lives in Trondheim with a network in Norwegian cleaning/window cleaning; Wisegent has no Norwegian language.
+- **Alternatives:** Compete in Sweden on UX/price (rejected: 10-year head start, remote founder); shelve product.
+- **Consequences:** PR #5 and AWS setup paused. Domain-neutral assets (backend skeleton, CI, migrator, scheduling UI) are reusable; RUT-specific logic may become Sweden-only.
+
 ## 2026-10-29 — Web prototype dependencies
 
 - **Decision:** `web/` uses react, react-dom, react-router-dom (HashRouter routing for the static demo), vite and @vitejs/plugin-react (build/dev), typescript (strict), vitest and jsdom (test runner and DOM), @testing-library/react, @testing-library/user-event and @testing-library/jest-dom (behaviour tests), eslint, @eslint/js, typescript-eslint, eslint-plugin-react-hooks and globals (lint). No UI framework; plain CSS + CSS Modules.
