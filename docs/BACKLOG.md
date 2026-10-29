@@ -20,4 +20,3 @@ Ordered by priority. Move items to STATE.md when started.
 ## Follow-ups from review
 - Backend: automated packaged-JAR resource-loading test for `Migrator` (current tests use exploded resources).
 - Backend: document reset of local schemas created by the first migrator version (no `state` column).
-- Web: invoice test for labour + öresavrundning invariant (`customerPays + rutAmount == totalInclVat + rounding`) and 550 kr/h incl→excl conversion.
