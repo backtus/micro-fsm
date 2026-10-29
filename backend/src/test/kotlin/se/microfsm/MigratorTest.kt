@@ -25,6 +25,8 @@ class MigratorTest {
     private class Recording(private val ds: DataSource, private val schema: String) : DataSource by ds {
         /** Statements whose SQL contains this text fail with an SQLException (failure injection). */
         var failOn: String? = null
+        /** Statement.close() throws after a successful execute of SQL containing this text. */
+        var failCloseAfter: String? = null
         val executed = mutableListOf<Executed>()
         val transactionControl = mutableListOf<String>()
 
@@ -42,7 +44,17 @@ class MigratorTest {
                 }
                 val result = try { m.invoke(real, *(args ?: emptyArray())) } catch (e: InvocationTargetException) { throw e.targetException }
                 if (m.name == "createStatement") {
+                    var lastSql: String? = null
                     Proxy.newProxyInstance(javaClass.classLoader, arrayOf(Statement::class.java)) { _, sm, sargs ->
+                        if (sm.name.startsWith("execute") && sargs?.firstOrNull() is String) lastSql = sargs[0] as String
+                        if (sm.name == "close") {
+                            val sql = lastSql
+                            val f = failCloseAfter
+                            if (f != null && sql != null && sql.contains(f)) {
+                                (result as Statement).close()
+                                throw java.sql.SQLException("injected close failure")
+                            }
+                        }
                         if (sm.name.startsWith("execute") && sargs?.firstOrNull() is String) {
                             executed += Executed(sargs[0] as String, real.autoCommit)
                             failOn?.let { if ((sargs[0] as String).contains(it)) throw java.sql.SQLException("injected failure") }
@@ -163,14 +175,16 @@ class MigratorTest {
     }
 
     @Test
-    fun `failing statement leaves no history row and stops later migrations`() {
+    fun `failing statement keeps STARTED marker and stops later migrations`() {
         inFreshSchema { rec, schema ->
             assertThatThrownBy { Migrator(rec, location = mt("failing")).migrate() }.hasMessageContaining("nosuchtype")
             assertThat(tableExists(schema, "t1")).isTrue() // V1 completed before the failure
             assertThat(tableExists(schema, "t2")).isFalse()
             assertThat(tableExists(schema, "t3")).isFalse()
             assertThat(count(schema, "select count(*) from {schema}.schema_migration where version = 1 and state = 'DONE'")).isEqualTo(1)
-            assertThat(count(schema, "select count(*) from {schema}.schema_migration where version >= 2")).isZero()
+            assertThat(count(schema, "select count(*) from {schema}.schema_migration where version = 2 and state = 'STARTED'")).isEqualTo(1)
+            assertThat(count(schema, "select count(*) from {schema}.schema_migration where version >= 3")).isZero()
+            assertThatThrownBy { Migrator(rec, location = mt("failing")).migrate() }.hasMessageContaining("Repair required")
         }
     }
 
@@ -189,6 +203,18 @@ class MigratorTest {
             ds.connection.use { it.createStatement().use { s -> s.execute("UPDATE $schema.schema_migration SET state='DONE' WHERE version=1") } }
             assertThat(Migrator(rec, location = mt("a")).migrate()).isEqualTo(1)
             assertThat(tableExists(schema, "t2")).isTrue()
+        }
+    }
+
+    @Test
+    fun `failure in statement cleanup after a committed DDL keeps STARTED and requires repair`() {
+        inFreshSchema { rec, schema ->
+            rec.failCloseAfter = "t1"
+            assertThatThrownBy { Migrator(rec, location = mt("a")).migrate() }.hasMessageContaining("injected close failure")
+            rec.failCloseAfter = null
+            assertThat(tableExists(schema, "t1")).isTrue()
+            assertThat(count(schema, "select count(*) from {schema}.schema_migration where version = 1 and state = 'STARTED'")).isEqualTo(1)
+            assertThatThrownBy { Migrator(rec, location = mt("a")).migrate() }.hasMessageContaining("Repair required")
         }
     }
 }

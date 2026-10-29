@@ -27,7 +27,7 @@ Read `docs/STATE.md` first. Decisions in `docs/DECISIONS.md`, priorities in `doc
 
 ## Repairing a failed migration
 
-`Migrator` records each migration as `STARTED` before running it and `DONE` afterwards (table `schema_migration`). A failing statement removes its own row, so just fix the SQL and rerun. If a run dies mid-way, the row stays `STARTED` and every later run refuses with "Repair required". To repair (as the migration user, single writer, nothing else migrating):
+`Migrator` records each migration as `STARTED` before running it and `DONE` afterwards (table `schema_migration`). If a statement fails or a run dies mid-way, the row stays `STARTED` (an error does not prove the DDL rolled back) and every later run refuses with "Repair required". To repair (as the migration user, single writer, nothing else migrating):
 1. Inspect the schema to see whether the statement of that version took effect.
 2. It did: `UPDATE schema_migration SET state = 'DONE' WHERE version = <n>;`. It did not: `DELETE FROM schema_migration WHERE version = <n>;`.
 3. Rerun the migrator. Never edit an applied migration file (checksum check) and never add a version lower than the highest applied one.

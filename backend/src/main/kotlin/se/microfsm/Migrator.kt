@@ -53,12 +53,9 @@ class Migrator(
                     it.setLong(1, m.version); it.setString(2, m.description.take(200)); it.setString(3, m.checksum)
                     it.executeUpdate()
                 }
-                try {
-                    exec(c, expand(m.sql)) // own transaction (auto-commit)
-                } catch (e: Exception) {
-                    try { deleteRow(c, m.version) } catch (cleanup: Exception) { e.addSuppressed(cleanup) }
-                    throw e
-                }
+                // Own transaction (auto-commit). On any failure the STARTED row is kept: an exception does not
+                // prove the DDL rolled back (e.g. Statement.close() can throw after commit), so a human must repair.
+                exec(c, expand(m.sql))
                 c.prepareStatement("UPDATE schema_migration SET state = 'DONE' WHERE version = ?").use {
                     it.setLong(1, m.version)
                     it.executeUpdate()
@@ -78,9 +75,6 @@ class Migrator(
         return rows
     }
 
-    private fun deleteRow(c: java.sql.Connection, version: Long) {
-        c.prepareStatement("DELETE FROM schema_migration WHERE version = ?").use { it.setLong(1, version); it.executeUpdate() }
-    }
 
     /** Validates history against the files; returns the pending migrations in order. Runs no migration SQL. */
     private fun preflight(migrations: List<Migration>, history: Map<Long, Row>): List<Migration> {
