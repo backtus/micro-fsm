@@ -1,35 +1,52 @@
 # Decisions
 
-Newest first. One entry per consequential decision. Entries marked **PROPOSED** await Kent's approval. Evidence: `docs/research/architecture-options.md`.
+Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 
-## 2026-10-29 — PROPOSED — Database: Aurora DSQL, gated by a spike
+## 2026-10-29 — Product scope and ambition
+
+- **Decision:** Side-income micro-SaaS; keep ambition low and achievable. Segment order: home cleaning → move-out cleaning (flyttstädning) → possibly moving. RUT support at XML-file level (Skatteverket upload, schema v6) in MVP; Fortnox integration is the first post-MVP item; Spiris later.
+- **Context:** Kent's direction. One potential design partner (the person who asked for this) — needs something concrete to see before any promises.
+- **Consequences:** Prioritise a showable demo early. Avoid investments that only pay off at scale (partner programmes, sales tooling, BankID).
+
+## 2026-10-29 — Proprietary code
+
+- **Decision:** Removed the MIT license; the code is proprietary (all rights reserved).
+- **Context:** Commercial SaaS.
+
+## 2026-10-29 — IaC language: Kotlin
+
+- **Decision:** AWS CDK written in Kotlin.
+- **Alternatives:** TypeScript (best CDK ergonomics and examples).
+- **Consequences:** One language across the stack; fewer copy-paste examples, some verbosity.
+
+## 2026-10-29 — Database: Aurora DSQL, gated by a spike
 
 - **Decision:** Aurora DSQL (Postgres-compatible, scale-to-zero, no VPC) with a shared schema, `tenant_id` on every table, UUIDv7 keys. Adoption conditional on a 1-day spike proving Quarkus + Hibernate/Panache + Flyway + DSQL connector + optimistic-concurrency retries work in eu-north-1.
 - **Context:** Relational domain; idle cost must be ~$0; Lambda outside VPC avoids NAT cost.
 - **Alternatives:** DynamoDB single-table (true $0, but awkward for scheduling/reporting queries and our relational model); Aurora Serverless v2 (full Postgres, but ~15 s resume and VPC, ~$40+/month realistic); Neon (not in Stockholm).
 - **Consequences:** No pgcrypto/extensions → app-level encryption. One DDL per transaction affects migrations. If the spike fails, fall back to DynamoDB.
 
-## 2026-10-29 — PROPOSED — Lambda runtime: JVM + SnapStart (arm64), native-ready
+## 2026-10-29 — Lambda runtime: JVM + SnapStart (arm64), native-ready
 
 - **Decision:** Single Quarkus "lambdalith" behind API Gateway HTTP API, JVM runtime with SnapStart on arm64. Keep code native-compatible to switch to Mandrel if cold starts disappoint.
 - **Context:** Native builds are slow and fragile in CI; SnapStart gives sub-second cold starts with normal JVM builds. eu-north-1 arm64 SnapStart availability to be verified in the spike.
 - **Alternatives:** Mandrel native (fastest cold start, heavy builds); many small functions (more infra, no benefit at this scale).
 - **Consequences:** Measure cold start in the walking skeleton; revisit if p95 > 1 s.
 
-## 2026-10-29 — PROPOSED — Auth: Cognito Essentials; BankID later via broker
+## 2026-10-29 — Auth: Cognito Essentials; BankID later via broker
 
 - **Decision:** Cognito user pool with tenant id in token claims; JWT authorizer on API Gateway. BankID added post-MVP via a broker (e.g. Criipto/Idura).
 - **Alternatives:** Direct BankID (SEK 80–250k setup); third-party IdPs (Auth0 etc., cost).
 - **Consequences:** Free up to 10k MAU.
 
-## 2026-10-29 — PROPOSED — Personal data encryption
+## 2026-10-29 — Personal data encryption
 
 - **Decision:** Personnummer and access notes encrypted in the application with one KMS customer-managed key (envelope encryption); keyed hash (HMAC) for lookup.
 - **Consequences:** ~$1/month fixed cost per key.
 
-## 2026-10-29 — PROPOSED — Front end, IaC, CI
+## 2026-10-29 — Front end, IaC, CI
 
-- **Decision:** Vite + React PWA on S3 + CloudFront. AWS CDK for IaC (language: see open question). GitHub Actions with OIDC to AWS — no long-lived keys.
+- **Decision:** Vite + React PWA on S3 + CloudFront. AWS CDK for IaC, written in Kotlin. GitHub Actions with OIDC to AWS — no long-lived keys.
 - **Alternatives:** SAM (less flexible), Terraform/OpenTofu (state backend to manage, separate language).
 - **Consequences:** Estimated idle bill ~$1.60–1.80/month per environment.
 

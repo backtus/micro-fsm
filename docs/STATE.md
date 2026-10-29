@@ -1,21 +1,18 @@
 # STATE
 
-**Goal:** Define the FSM product and its architecture well enough to build a first thin, deployed slice.
-**Phase:** discovery
+**Goal:** A showable demo for the design partner, and a proven architecture (DSQL spike) leading to a deployed walking skeleton.
+**Phase:** discovery → building
 **Updated:** 2026-10-29
 
 ## Done
-- Repo bootstrapped with factory docs structure.
-- Backend stack decided: Kotlin + Quarkus on Lambda (see DECISIONS.md).
+- Discovery: `docs/product/brief.md`, `docs/research/*.md`.
+- Architecture ADRs accepted; scope, ambition, Kotlin CDK, proprietary licence decided (see DECISIONS.md).
 
 ## In progress
-- Awaiting Kent: review of brief, research and PROPOSED ADRs.
-- Discovery done: docs/product/brief.md, docs/research/*.md, PROPOSED ADRs in DECISIONS.md.
+- Planning the DSQL spike and the design-partner demo (planner).
 
 ## Next step
-- Kent reviews `docs/product/brief.md` and the proposed ADRs.
+- Build spike and demo in parallel.
 
 ## Waiting on Kent
-- Review of discovery output.
-- License: repo has MIT; confirm that is intended for a commercial SaaS.
-- `gh auth login` (needed for PRs).
+- AWS account (needed for the spike's cloud part and the walking skeleton): dedicated account, budget alarm, way for the factory to authenticate (SSO profile or OIDC role).
