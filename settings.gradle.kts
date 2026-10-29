@@ -18,3 +18,4 @@ dependencyResolutionManagement {
 rootProject.name = "micro-fsm"
 
 include("backend")
+include("infra")
