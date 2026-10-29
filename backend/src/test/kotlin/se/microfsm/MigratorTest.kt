@@ -23,6 +23,8 @@ class MigratorTest {
 
     /** DataSource in its own schema whose connections record every statement and any transaction control. */
     private class Recording(private val ds: DataSource, private val schema: String) : DataSource by ds {
+        /** Statements whose SQL contains this text fail with an SQLException (failure injection). */
+        var failOn: String? = null
         val executed = mutableListOf<Executed>()
         val transactionControl = mutableListOf<String>()
 
@@ -34,12 +36,16 @@ class MigratorTest {
                     "setAutoCommit" -> if (args[0] == false) transactionControl += "setAutoCommit(false)"
                     "commit", "rollback", "setSavepoint" -> transactionControl += m.name
                 }
-                if (m.name == "prepareStatement") executed += Executed(args[0] as String, real.autoCommit)
+                if (m.name == "prepareStatement") {
+                    executed += Executed(args[0] as String, real.autoCommit)
+                    failOn?.let { if ((args[0] as String).contains(it)) throw java.sql.SQLException("injected failure") }
+                }
                 val result = try { m.invoke(real, *(args ?: emptyArray())) } catch (e: InvocationTargetException) { throw e.targetException }
                 if (m.name == "createStatement") {
                     Proxy.newProxyInstance(javaClass.classLoader, arrayOf(Statement::class.java)) { _, sm, sargs ->
                         if (sm.name.startsWith("execute") && sargs?.firstOrNull() is String) {
                             executed += Executed(sargs[0] as String, real.autoCommit)
+                            failOn?.let { if ((sargs[0] as String).contains(it)) throw java.sql.SQLException("injected failure") }
                         }
                         try { sm.invoke(result, *(sargs ?: emptyArray())) } catch (e: InvocationTargetException) { throw e.targetException }
                     }
@@ -113,5 +119,76 @@ class MigratorTest {
         assertThat(sql).contains("\${index_async}")
         val expanded = Migrator::class.java.getDeclaredMethod("expand", String::class.java).apply { isAccessible = true }
         assertThat(expanded.invoke(Migrator(ds, mapOf("index_async" to "ASYNC")), sql) as String).contains("CREATE INDEX ASYNC job_tenant_date_idx")
+    }
+
+    private fun mt(dir: String) = "db/mt/$dir"
+    private fun tableExists(schema: String, t: String) =
+        count(schema, "select count(*) from pg_tables where schemaname='{schema}' and tablename='$t'") == 1
+    private fun historyRows(schema: String) = count(schema, "select count(*) from {schema}.schema_migration")
+
+    @Test
+    fun `bad checksum anywhere in history is detected before any pending migration runs`() {
+        inFreshSchema { rec, schema ->
+            Migrator(rec, location = mt("a")).migrate()
+            assertThatThrownBy { Migrator(rec, location = mt("changed")).migrate() }.hasMessageContaining("Checksum mismatch for applied migration V2")
+            assertThat(tableExists(schema, "t3")).isFalse() // V3 pending but nothing ran
+        }
+    }
+
+    @Test
+    fun `applied migration whose file is missing fails`() {
+        inFreshSchema { rec, _ ->
+            Migrator(rec, location = mt("a")).migrate()
+            assertThatThrownBy { Migrator(rec, location = mt("missing")).migrate() }.hasMessageContaining("Applied migration V2 has no file")
+        }
+    }
+
+    @Test
+    fun `out-of-order pending migration is rejected without running anything`() {
+        inFreshSchema { rec, schema ->
+            Migrator(rec, location = mt("v2only")).migrate()
+            assertThatThrownBy { Migrator(rec, location = mt("a")).migrate() }.hasMessageContaining("Out-of-order migration V1")
+            assertThat(tableExists(schema, "t1")).isFalse()
+            assertThat(historyRows(schema)).isEqualTo(1)
+        }
+    }
+
+    @Test
+    fun `malformed file name and empty location are rejected`() {
+        inFreshSchema { rec, schema ->
+            assertThatThrownBy { Migrator(rec, location = mt("badname")).migrate() }.hasMessageContaining("V3_add_table.sql")
+            assertThat(tableExists(schema, "t1")).isFalse()
+            assertThatThrownBy { Migrator(rec, location = mt("empty")).migrate() }.hasMessageContaining("No migrations found")
+        }
+    }
+
+    @Test
+    fun `failing statement leaves no history row and stops later migrations`() {
+        inFreshSchema { rec, schema ->
+            assertThatThrownBy { Migrator(rec, location = mt("failing")).migrate() }.hasMessageContaining("nosuchtype")
+            assertThat(tableExists(schema, "t1")).isTrue() // V1 completed before the failure
+            assertThat(tableExists(schema, "t2")).isFalse()
+            assertThat(tableExists(schema, "t3")).isFalse()
+            assertThat(count(schema, "select count(*) from {schema}.schema_migration where version = 1 and state = 'DONE'")).isEqualTo(1)
+            assertThat(count(schema, "select count(*) from {schema}.schema_migration where version >= 2")).isZero()
+        }
+    }
+
+    @Test
+    fun `failure after the statement ran leaves DDL visible and blocks the next run until repaired`() {
+        inFreshSchema { rec, schema ->
+            rec.failOn = "SET state = 'DONE'"
+            assertThatThrownBy { Migrator(rec, location = mt("a")).migrate() }.hasMessageContaining("injected failure")
+            rec.failOn = null
+            assertThat(tableExists(schema, "t1")).isTrue()
+            assertThat(count(schema, "select count(*) from {schema}.schema_migration where version = 1 and state = 'STARTED'")).isEqualTo(1)
+            assertThatThrownBy { Migrator(rec, location = mt("a")).migrate() }
+                .hasMessageContaining("V1 is in state STARTED").hasMessageContaining("Repair required")
+            assertThat(tableExists(schema, "t2")).isFalse()
+            // repair as documented in AGENTS.md: statement is known to have applied -> mark DONE, then rerun
+            ds.connection.use { it.createStatement().use { s -> s.execute("UPDATE $schema.schema_migration SET state='DONE' WHERE version=1") } }
+            assertThat(Migrator(rec, location = mt("a")).migrate()).isEqualTo(1)
+            assertThat(tableExists(schema, "t2")).isTrue()
+        }
     }
 }

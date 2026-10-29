@@ -32,6 +32,23 @@ class MigrationLintTest {
         return v
     }
 
+    private fun nameViolations(names: List<String>): List<String> {
+        val v = names.filterNot { Migrator.NAME.matches(it) }.map { "$it: bad file name (V<n>__<description>.sql)" }.toMutableList()
+        val versions = names.mapNotNull { Migrator.NAME.matchEntire(it)?.groupValues?.get(1)?.toLong() }
+        if (versions.size != versions.toSet().size) v += "duplicate versions"
+        return v
+    }
+
+    @Test
+    fun `file names follow V_n__description`() {
+        assertThat(nameViolations(files().map { it.name })).isEmpty()
+        assertThat(nameViolations(listOf("V3_add_table.sql"))).isNotEmpty()
+        assertThat(nameViolations(listOf("v1__x.sql"))).isNotEmpty()
+        assertThat(nameViolations(listOf("V1__a-b.sql"))).isNotEmpty()
+        assertThat(nameViolations(listOf("V1__a.sql", "V1__b.sql"))).isNotEmpty()
+        assertThat(nameViolations(listOf("V1__a.sql", "V2__b.sql"))).isEmpty()
+    }
+
     @Test
     fun `existing migrations comply`() {
         val all = files()
