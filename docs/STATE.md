@@ -9,7 +9,8 @@
 - Backend stack decided: Kotlin + Quarkus on Lambda (see DECISIONS.md).
 
 ## In progress
-- Discovery: product brief, architecture research (database, Quarkus on Lambda runtime, IaC), RUT/Skatteverket and accounting integration research.
+- Awaiting Kent: review of brief, research and PROPOSED ADRs.
+- Discovery done: docs/product/brief.md, docs/research/*.md, PROPOSED ADRs in DECISIONS.md.
 
 ## Next step
 - Kent reviews `docs/product/brief.md` and the proposed ADRs.
