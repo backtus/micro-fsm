@@ -22,6 +22,8 @@ class MigrationLintTest {
         if (Regex("create\\s+extension", RegexOption.IGNORE_CASE).containsMatchIn(code)) v += "$name: CREATE EXTENSION"
         if (Regex("\\btrigger\\b", RegexOption.IGNORE_CASE).containsMatchIn(code)) v += "$name: TRIGGER"
         if (Regex("\\bjsonb?\\b", RegexOption.IGNORE_CASE).containsMatchIn(code)) v += "$name: json/jsonb"
+        if (Regex("\\breferences\\b|foreign\\s+key", RegexOption.IGNORE_CASE).containsMatchIn(code)) v += "$name: foreign key / REFERENCES"
+        if (Regex("\\b(insert\\s+into|update\\s+\\w+\\s+set|delete\\s+from)\\b", RegexOption.IGNORE_CASE).containsMatchIn(code)) v += "$name: DML in a migration (keep DDL and DML apart)"
         if (Regex("create\\s+(unique\\s+)?index", RegexOption.IGNORE_CASE).containsMatchIn(code) &&
             !Regex("index\\s+\\$\\{index_async}", RegexOption.IGNORE_CASE).containsMatchIn(code)
         ) {
@@ -43,6 +45,11 @@ class MigrationLintTest {
         assertThat(violations("a", "CREATE EXTENSION pgcrypto;")).isNotEmpty()
         assertThat(violations("a", "CREATE TRIGGER t BEFORE INSERT ON a EXECUTE FUNCTION f();")).isNotEmpty()
         assertThat(violations("a", "CREATE TABLE a (d jsonb);")).isNotEmpty()
+        assertThat(violations("a", "CREATE TABLE a (id int, b int REFERENCES c (id));")).isNotEmpty()
+        assertThat(violations("a", "ALTER TABLE a ADD FOREIGN KEY (b) REFERENCES c (id);")).isNotEmpty()
+        assertThat(violations("a", "ALTER TABLE a ADD CONSTRAINT fk FOREIGN KEY (b) REFERENCES c (id);")).isNotEmpty()
+        assertThat(violations("a", "INSERT INTO a (id) VALUES (1);")).isNotEmpty()
+        assertThat(violations("a", "UPDATE a SET b = 1;")).isNotEmpty()
         assertThat(violations("a", "CREATE INDEX i ON a (b);")).isNotEmpty()
         assertThat(violations("a", "CREATE INDEX \${index_async} i ON a (b);")).isEmpty()
         assertThat(violations("a", "-- one; two\nCREATE TABLE a (id int);")).isEmpty()

@@ -18,12 +18,12 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
   - `quarkus-kotlin` — Kotlin support in Quarkus.
   - `quarkus-hibernate-orm-panache-kotlin` — persistence (repository style).
   - `quarkus-jdbc-postgresql` — PostgreSQL driver / Dev Services (DSQL is PG-compatible).
-  - `quarkus-flyway`, `quarkus-flyway-postgresql` — migrations (Flyway 12; PostgreSQL module needed for Flyway's PG support).
+  - No Flyway: see consequences. (`quarkus-flyway` was removed after review.)
   - `software.amazon.dsql:aurora-dsql-jdbc-connector:1.5.1` — official pgJDBC wrapper that generates IAM tokens per connection (`jdbc:aws-dsql:postgresql://…`, driver `software.amazon.dsql.jdbc.DSQLConnector`); no password anywhere.
   - Test only: `quarkus-junit`, `rest-assured`, `assertj-core`.
 - **Context:** A1 spike; DSQL decision depends on this skeleton working.
 - **Alternatives:** Java 21 (older LTS); in-house UUIDv7 generator (unneeded); AWS Advanced JDBC Wrapper DSQL plugin (heavier).
-- **Consequences:** `%dsql` driver and Hibernate offline-start settings are build-time, so the deployable package must be built with `QUARKUS_PROFILE=dsql`. Flyway's PostgreSQL transactional lock is turned off and `${index_async}` is supplied by a `FlywayConfigurationCustomizer` (a Quarkus property cannot hold an empty value). OCC retry is a ~50-line in-house class (3 attempts, jittered backoff) instead of the connector's `OCCRetry`, which is not Hibernate/JTA-transaction aware.
+- **Consequences:** `%dsql` driver and Hibernate offline-start settings are build-time, so the deployable package must be built with `QUARKUS_PROFILE=dsql`. Migrations use an in-house `Migrator` (~100 lines, `V<n>__*.sql`, `schema_migration` table, no locks, auto-commit so every statement is its own transaction, `${index_async}` placeholder) instead of Flyway. Why: Flyway 12's PostgreSQL support only offers session-level advisory locks (`transactional.lock=false` does not remove locking), which DSQL lacks. The official `org.flywaydb:flyway-database-dsql:10.26.0` (Redgate/community, also republished by AWS as `aurora-dsql-flyway-support`) is the maintained fix but targets Flyway 11.9; on Flyway 12.0 (Quarkus 3.40's version) Flyway selected stock PostgreSQL for DSQL URLs and ignored the module (verified in a local test), and a workaround would depend on Flyway internals that can only be validated on a real cluster. Revisit when Quarkus ships a Flyway the DSQL module supports. The deployed invoke that runs `Migrator` is to be added with the infra (A2.1); until then it runs at startup only in dev/test (`app.migrate.at-start`). OCC retry is a ~50-line in-house class (3 attempts, jittered backoff) instead of the connector's `OCCRetry`, which is not Hibernate/JTA-transaction aware.
 
 ## 2026-10-29 — Personal data inventory
 
@@ -55,7 +55,7 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 
 ## 2026-10-29 — Database: Aurora DSQL, gated by a spike
 
-- **Decision:** Aurora DSQL (Postgres-compatible, scale-to-zero, no VPC) with a shared schema, `tenant_id` on every table, UUIDv7 keys. Adoption conditional on a 1-day spike proving Quarkus + Hibernate/Panache + Flyway + DSQL connector + optimistic-concurrency retries work in eu-north-1.
+- **Decision:** Aurora DSQL (Postgres-compatible, scale-to-zero, no VPC) with a shared schema, `tenant_id` on every table, UUIDv7 keys. Adoption conditional on a 1-day spike proving Quarkus + Hibernate/Panache + migrations + DSQL connector + optimistic-concurrency retries work in eu-north-1.
 - **Context:** Relational domain; idle cost must be ~$0; Lambda outside VPC avoids NAT cost.
 - **Alternatives:** DynamoDB single-table (true $0, but awkward for scheduling/reporting queries and our relational model); Aurora Serverless v2 (full Postgres, but ~15 s resume and VPC, ~$40+/month realistic); Neon (not in Stockholm). Aurora/Neon are not fallbacks.
 - **Consequences:** No pgcrypto/extensions → app-level encryption. One DDL per transaction affects migrations. If the spike fails, fall back to DynamoDB.

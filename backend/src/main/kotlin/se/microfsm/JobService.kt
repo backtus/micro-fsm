@@ -31,9 +31,13 @@ class JobService @Inject constructor(
     fun list(tenant: UUID, date: LocalDate): List<Job> = tx { repo.list("tenantId = ?1 and scheduledDate = ?2 order by createdAt", tenant, date) }
 
     /** Transaction is opened inside the retry loop so each attempt starts from a fresh snapshot. */
-    fun complete(tenant: UUID, id: UUID, minutes: Int): Job = occRetry.run {
+    fun complete(tenant: UUID, id: UUID, minutes: Int): Job = completeWithHooks(tenant, id, minutes)
+
+    /** [afterRead] runs inside the transaction between read and write; it exists so tests can force interleavings. */
+    internal fun completeWithHooks(tenant: UUID, id: UUID, minutes: Int, afterRead: () -> Unit = {}): Job = occRetry.run {
         tx {
             val job = find(tenant, id)
+            afterRead()
             job.status = JobStatus.DONE
             job.actualMinutes = minutes
             job
