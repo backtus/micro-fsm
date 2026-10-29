@@ -9,6 +9,22 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 - **Alternatives:** UI framework (rejected: more weight, little value for a small demo).
 - **Consequences:** RUT rounding (down to whole kronor) is provisional until checked against Begaran.xsd.
 
+## 2026-10-29 — Backend skeleton: toolchain and dependencies
+
+- **Decision:** Java 25 (`java25` Lambda runtime, Amazon Linux 2023, deprecation 2029-06-30; newest LTS Lambda offers, SnapStart supported in supported Regions — eu-north-1 still to verify in the spike). Quarkus 3.40.1 (Hibernate ORM 7.4, so `@UuidGenerator(style = VERSION_7)` is used and no in-house UUIDv7 generator), Kotlin 2.4.21, Gradle 9.8.2 (Kotlin DSL, version catalog, foojay toolchain resolver 1.0.0 to auto-provision the JDK).
+- **Dependencies (reasons):**
+  - `quarkus-amazon-lambda-http` — run JAX-RS app behind API Gateway HTTP API; produces `function.zip`.
+  - `quarkus-rest`, `quarkus-rest-jackson`, `jackson-module-kotlin` — REST + JSON with Kotlin data classes.
+  - `quarkus-kotlin` — Kotlin support in Quarkus.
+  - `quarkus-hibernate-orm-panache-kotlin` — persistence (repository style).
+  - `quarkus-jdbc-postgresql` — PostgreSQL driver / Dev Services (DSQL is PG-compatible).
+  - No Flyway: see consequences. (`quarkus-flyway` was removed after review.)
+  - `software.amazon.dsql:aurora-dsql-jdbc-connector:1.5.1` — official pgJDBC wrapper that generates IAM tokens per connection (`jdbc:aws-dsql:postgresql://…`, driver `software.amazon.dsql.jdbc.DSQLConnector`); no password anywhere.
+  - Test only: `quarkus-junit`, `rest-assured`, `assertj-core`.
+- **Context:** A1 spike; DSQL decision depends on this skeleton working.
+- **Alternatives:** Java 21 (older LTS); in-house UUIDv7 generator (unneeded); AWS Advanced JDBC Wrapper DSQL plugin (heavier).
+- **Consequences:** `%dsql` driver and Hibernate offline-start settings are build-time, so the deployable package must be built with `QUARKUS_PROFILE=dsql`. Migrations use an in-house `Migrator` (~100 lines, `V<n>__*.sql`, `schema_migration` table, no locks, auto-commit so every statement is its own transaction, `${index_async}` placeholder) instead of Flyway. Why: Flyway 12's PostgreSQL support only offers session-level advisory locks (`transactional.lock=false` does not remove locking), which DSQL lacks. The official `org.flywaydb:flyway-database-dsql:10.26.0` (Redgate/community, also republished by AWS as `aurora-dsql-flyway-support`) is the maintained fix but targets Flyway 11.9; on Flyway 12.0 (Quarkus 3.40's version) Flyway selected stock PostgreSQL for DSQL URLs and ignored the module (verified in a local test), and a workaround would depend on Flyway internals that can only be validated on a real cluster. Revisit when Quarkus ships a Flyway the DSQL module supports. The deployed invoke that runs `Migrator` is to be added with the infra (A2.1); until then it runs at startup only in dev/test (`app.migrate.at-start`). OCC retry is a ~50-line in-house class (3 attempts, jittered backoff) instead of the connector's `OCCRetry`, which is not Hibernate/JTA-transaction aware.
+
 ## 2026-10-29 — Personal data inventory
 
 - **Decision:** Personal data is limited to these categories and purposes: customer identity, contact and address (service delivery, invoicing); personnummer (RUT claim only, encrypted); property identifiers for RUT where needed; access notes and door codes (job access, encrypted); worker identity and contact (scheduling); assignments and time reports (scheduling, invoicing, RUT actual hours); free-text job notes (operational instructions only; UI guidance tells users not to enter sensitive data such as health information). Retention is TBD, with the 7-year bookkeeping requirement as a consideration. The MVP stores no personal data offline on devices.
@@ -39,7 +55,7 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 
 ## 2026-10-29 — Database: Aurora DSQL, gated by a spike
 
-- **Decision:** Aurora DSQL (Postgres-compatible, scale-to-zero, no VPC) with a shared schema, `tenant_id` on every table, UUIDv7 keys. Adoption conditional on a 1-day spike proving Quarkus + Hibernate/Panache + Flyway + DSQL connector + optimistic-concurrency retries work in eu-north-1.
+- **Decision:** Aurora DSQL (Postgres-compatible, scale-to-zero, no VPC) with a shared schema, `tenant_id` on every table, UUIDv7 keys. Adoption conditional on a 1-day spike proving Quarkus + Hibernate/Panache + migrations + DSQL connector + optimistic-concurrency retries work in eu-north-1.
 - **Context:** Relational domain; idle cost must be ~$0; Lambda outside VPC avoids NAT cost.
 - **Alternatives:** DynamoDB single-table (true $0, but awkward for scheduling/reporting queries and our relational model); Aurora Serverless v2 (full Postgres, but ~15 s resume and VPC, ~$40+/month realistic); Neon (not in Stockholm). Aurora/Neon are not fallbacks.
 - **Consequences:** No pgcrypto/extensions → app-level encryption. One DDL per transaction affects migrations. If the spike fails, fall back to DynamoDB.
