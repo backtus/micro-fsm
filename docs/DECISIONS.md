@@ -2,6 +2,13 @@
 
 Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 
+## 2026-10-29 — Web prototype dependencies
+
+- **Decision:** `web/` uses react, react-dom, react-router-dom (HashRouter routing for the static demo), vite and @vitejs/plugin-react (build/dev), typescript (strict), vitest and jsdom (test runner and DOM), @testing-library/react, @testing-library/user-event and @testing-library/jest-dom (behaviour tests), eslint, @eslint/js, typescript-eslint, eslint-plugin-react-hooks and globals (lint). No UI framework; plain CSS + CSS Modules.
+- **Context:** Design-partner prototype (B1–B3); consistent with the Vite + React front-end decision. All data is invented; no personnummer.
+- **Alternatives:** UI framework (rejected: more weight, little value for a small demo).
+- **Consequences:** RUT rounding (down to whole kronor) is provisional until checked against Begaran.xsd.
+
 ## 2026-10-29 — Personal data inventory
 
 - **Decision:** Personal data is limited to these categories and purposes: customer identity, contact and address (service delivery, invoicing); personnummer (RUT claim only, encrypted); property identifiers for RUT where needed; access notes and door codes (job access, encrypted); worker identity and contact (scheduling); assignments and time reports (scheduling, invoicing, RUT actual hours); free-text job notes (operational instructions only; UI guidance tells users not to enter sensitive data such as health information). Retention is TBD, with the 7-year bookkeeping requirement as a consideration. The MVP stores no personal data offline on devices.

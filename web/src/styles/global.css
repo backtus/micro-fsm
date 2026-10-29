@@ -1,0 +1,40 @@
+:root {
+  --c-bg: #f4f7f7;
+  --c-surface: #ffffff;
+  --c-text: #17262b;
+  --c-muted: #5a6d73;
+  --c-primary: #0f5c63;
+  --c-primary-dark: #0a4349;
+  --c-primary-soft: #e0f0f1;
+  --c-border: #d5e0e2;
+  --c-warn: #b45309;
+  --c-warn-bg: #fef3c7;
+  --c-danger: #b42318;
+  --c-danger-bg: #fee4e2;
+  --c-ok: #1b7a43;
+  --c-ok-bg: #dcf5e6;
+  --c-banner: #1f2937;
+  --radius: 12px;
+  --tap: 44px;
+  --banner-h: 28px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--font); background: var(--c-bg); color: var(--c-text); font-size: 16px; line-height: 1.45; }
+h1 { font-size: 1.35rem; margin: 0 0 0.75rem; }
+h2 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
+a { color: var(--c-primary); }
+button, select, input, textarea { font: inherit; }
+button, select, input:not([type='checkbox']), .tap { min-height: var(--tap); }
+select, input, textarea { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--c-border); border-radius: 8px; background: #fff; color: inherit; }
+label { display: block; font-weight: 600; margin: 0.75rem 0 0.25rem; }
+.btn { background: var(--c-primary); color: #fff; border: 0; border-radius: 10px; padding: 0.5rem 1rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.btn:hover { background: var(--c-primary-dark); }
+.btn.secondary { background: var(--c-primary-soft); color: var(--c-primary-dark); }
+.btn.block { width: 100%; margin-top: 1rem; }
+.card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius); padding: 0.9rem 1rem; margin-bottom: 0.6rem; }
+.muted { color: var(--c-muted); font-size: 0.9rem; }
+.notice { border-radius: 10px; padding: 0.7rem 0.9rem; margin: 0.75rem 0; font-size: 0.92rem; background: var(--c-primary-soft); }
+.notice.warn { background: var(--c-warn-bg); color: #6b3a05; }
+.error { color: var(--c-danger); font-size: 0.9rem; margin: 0.25rem 0 0; }
+:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
