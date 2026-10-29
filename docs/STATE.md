@@ -1,21 +1,17 @@
 # STATE
 
-**Goal:** Decide go/no-go and market (Sweden vs Norway) before further build spend.
-**Phase:** discovery (re-opened)
+**Goal:** —
+**Phase:** shelved (2026-10-29)
 **Updated:** 2026-10-29
 
-## Done
-- Discovery (Sweden): brief, architecture and RUT research; ADRs accepted.
-- Design-partner demo (PR #2), backend skeleton (PR #3), CI (PR #4) — all merged and green.
+## Why shelved
+Kent chose not to pursue the cleaning business. Sweden: Wisegent and Upflow already cover the MVP. Norway: window-cleaning rounds looked like a real gap (see `docs/research/norway-*.md`) but are not a business Kent wants to run. See DECISIONS.md 2026-10-29.
 
-## Paused
-- PR #5 (CDK spike stack) and AWS account setup: waiting on market decision; also needs Kent's call on the AWS security boundary (dedicated account vs least-privilege now).
+## What exists
+- Product brief and research: Sweden (RUT, architecture), Norway (regulation, competitors).
+- Clickable Swedish demo in `web/` (`npm --prefix web ci && npm --prefix web run dev`).
+- Backend skeleton (Quarkus/Kotlin, DSQL-safe migrator, OCC retry) and CI — green.
+- Unmerged: CDK spike stack (PR #5, closed, branch kept).
 
-## In progress
-- Norway market research: regulation (renholdsregister, HMS-kort, tariff) and competitors/accounting systems → `docs/research/norway-*.md`.
-
-## Next step
-- Kent + Director decide: Norway pivot, Sweden niche, or shelve. Validate with Kent's network (Trondheim cleaning/window-cleaning contacts; Sundsvall contact).
-
-## Waiting on Kent
-- Talk to Sundsvall contact: does he know Wisegent/Upflow; what is missing for him?
+## If revived
+Start with interviews (window cleaners in Trondheim), then decide AWS security boundary before resuming PR #5.
