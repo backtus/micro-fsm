@@ -16,4 +16,5 @@ Read `docs/STATE.md` first. Decisions in `docs/DECISIONS.md`, priorities in `doc
 
 - Backend: Kotlin + Quarkus on AWS Lambda. Go allowed for front-end tooling and scripts.
 - Product-facing text in Swedish; code, docs and commits in English.
-- Build/test commands: _to be defined with the first code slice._
+- Web (`web/`, Node 26): `npm --prefix web ci && npm --prefix web test && npm --prefix web run lint && npm --prefix web run build`; `npm --prefix web run dev` runs the demo. Plain CSS + CSS Modules, no UI framework.
+- Backend/infra build commands: _to be defined with the first backend slice._

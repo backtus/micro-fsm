@@ -1,0 +1,7 @@
+.access { display: flex; gap: 0.6rem; align-items: center; }
+.masked { letter-spacing: 0.15em; flex: 1; }
+.stepper { display: flex; gap: 0.5rem; }
+.stepper button { width: var(--tap); border: 1px solid var(--c-border); background: #fff; border-radius: 8px; font-size: 1.3rem; cursor: pointer; }
+.stepper input { text-align: center; }
+.tasks { margin: 0; padding-left: 1.2rem; }
+.tasks li { padding: 0.15rem 0; }

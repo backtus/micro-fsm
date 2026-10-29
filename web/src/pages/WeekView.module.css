@@ -1,0 +1,20 @@
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.75rem; }
+.nav button { padding: 0 1rem; }
+.scroll { overflow-x: auto; border: 1px solid var(--c-border); border-radius: var(--radius); background: #fff; }
+.grid { border-collapse: collapse; min-width: 760px; width: 100%; }
+.grid th, .grid td { border: 1px solid var(--c-border); padding: 0.3rem; vertical-align: top; min-width: 100px; }
+.grid thead th { background: var(--c-primary-soft); font-size: 0.85rem; }
+.grid th[scope='row'] { text-align: left; background: #fafcfc; min-width: 110px; font-size: 0.9rem; }
+.today { background: #fff8e1 !important; }
+.unRow th, .unRow td { background: var(--c-warn-bg); }
+.chip { display: block; width: 100%; text-align: left; min-height: var(--tap); margin-bottom: 0.25rem; border: 1px solid var(--c-border); background: #fff; border-radius: 8px; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.82rem; }
+.chip b { display: block; }
+.chipDone { background: var(--c-ok-bg); border-color: #a7e0bf; }
+.chipUn { border-color: var(--c-warn); background: #fff; box-shadow: inset 4px 0 0 var(--c-warn); }
+.chipOver { border-color: var(--c-danger); background: var(--c-danger-bg); box-shadow: inset 4px 0 0 var(--c-danger); }
+.legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; margin: 0.6rem 0; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 60; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: #fff; width: 100%; max-width: 560px; border-radius: 16px 16px 0 0; padding: 1rem 1rem 1.5rem; }
+.sheet h2 { margin-top: 0; }
+.actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.actions .btn { flex: 1; }

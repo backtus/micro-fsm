@@ -1,0 +1,6 @@
+.table { width: 100%; border-collapse: collapse; }
+.table td { padding: 0.5rem 0; border-bottom: 1px solid var(--c-border); }
+.table td:last-child { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.total td { font-weight: 700; font-size: 1.1rem; border-bottom: 0; }
+.rut td:last-child { color: var(--c-ok); }
+.item { display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: inherit; min-height: 56px; }
