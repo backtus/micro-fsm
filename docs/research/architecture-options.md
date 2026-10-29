@@ -30,7 +30,7 @@ Fixed constraints: Kotlin + Quarkus on Lambda, eu-north-1, fully serverless, idl
 
 It is the only option that is simultaneously SQL/relational, scale-to-zero with no resume penalty, no VPC/NAT, and in Stockholm. Use shared schema with a `tenant_id` column on every table, Hibernate 6 `@TenantId` discriminator multitenancy (or a mandatory filter) plus tests asserting cross-tenant reads fail. UUIDv7 primary keys. Encrypt personnummer at the application layer (KMS data key / envelope encryption, store ciphertext + a keyed HMAC for lookup), since DSQL has no pgcrypto. Reporting: plain SQL for in-app reports; export to S3 later if needed. First task: a 1-day spike proving Quarkus + Hibernate ORM + Flyway (or Liquibase) + DSQL JDBC connector on Lambda, including retry on serialization (OC000/40001) errors.
 
-Revisit if: the spike shows Hibernate/Flyway friction that costs more than a day a month; DPU costs per tenant exceed ~$1/month; we need RLS, triggers or extensions. Fallback is Aurora Serverless v2 (accepting ~$40+/month) or Neon.
+Revisit if: the spike shows Hibernate/Flyway friction that costs more than a day a month; DPU costs per tenant exceed ~$1/month; we need RLS, triggers or extensions. ~~Fallback is Aurora Serverless v2 (accepting ~$40+/month) or Neon.~~ **Superseded by DECISIONS.md (2026-10-29, Database):** the fallback is DynamoDB.
 
 ## 2. Quarkus on Lambda runtime
 
@@ -67,7 +67,8 @@ Recommendation: **Cognito Essentials** (email + passkey / email OTP), one user p
 
 - Hosting: **S3 (private) + CloudFront with OAC**, ACM certificate in us-east-1 (free). CloudFront free tier (1 TB, 10M requests/month) makes this ~$0 idle.
 - Framework: keep simple — **Vite + a mainstream SPA framework** (React or Svelte; pick the one the agents produce most reliably — React is the safe default) as an installable PWA (`vite-plugin-pwa`/Workbox). No SSR (would need compute).
-- Offline: field staff need today's job list, addresses, notes and the ability to log time/check off jobs without coverage. MVP: cache the app shell + today's/this week's assignments in IndexedDB; queue mutations (time reports, status changes) in an outbox and sync with idempotency keys; last-write-wins with server-side conflict flag. Avoid full offline-first sync engines until needed. Note iOS PWA limits (background sync unsupported, storage may be evicted) — sync on app open/foreground.
+- **MVP offline scope (DECISIONS.md, Personal data inventory):** the MVP caches only static app assets. Offline storage of personal data (addresses, access codes, notes) on devices is out of MVP until data categories, protection and deletion rules are decided. The text below describes a later option, not MVP.
+- Offline (later option): field staff need today's job list, addresses, notes and the ability to log time/check off jobs without coverage. MVP: cache the app shell + today's/this week's assignments in IndexedDB; queue mutations (time reports, status changes) in an outbox and sync with idempotency keys; last-write-wins with server-side conflict flag. Avoid full offline-first sync engines until needed. Note iOS PWA limits (background sync unsupported, storage may be evicted) — sync on app open/foreground.
 
 Revisit if: native features (background location, reliable push on iOS, camera-heavy flows) become core → consider Capacitor wrapper.
 
@@ -81,7 +82,7 @@ Revisit if: native features (background location, reliable push on iOS, camera-h
 | New-service lag (e.g. DSQL) | L1 available quickly ⚠️ check `AWS::DSQL::Cluster` | same | via CFN | provider usually quick |
 | Local testing | — | — | `sam local` | — |
 
-Recommendation: **AWS CDK in TypeScript** in an `infra/` folder. TypeScript CDK is the best-documented and fastest-iterating flavour; using Kotlin for CDK buys language consistency but adds JVM/jsii overhead and fewer examples. Terraform is fine but adds state management for no gain on an AWS-only stack. Quarkus dev mode (not SAM local) for local backend work.
+**Superseded by DECISIONS.md (2026-10-29, IaC language): CDK is written in Kotlin.** Original recommendation: AWS CDK in TypeScript in an `infra/` folder. TypeScript CDK is the best-documented and fastest-iterating flavour; using Kotlin for CDK buys language consistency but adds JVM/jsii overhead and fewer examples. Terraform is fine but adds state management for no gain on an AWS-only stack. Quarkus dev mode (not SAM local) for local backend work.
 
 CI: **GitHub Actions with OIDC** (`aws-actions/configure-aws-credentials`, IAM role trusted for `repo:<org>/micro-fsm:ref:refs/heads/main` and environments). Pipeline: build + test → `cdk diff` on PR → `cdk deploy` dev on merge to main; staging/prod via GitHub environments with approval. No long-lived keys.
 
@@ -117,11 +118,11 @@ Estimated idle bill (recommended stack, one environment): Route 53 $0.50 + KMS $
 | Auth | Cognito Essentials (email OTP / passkeys); BankID later via Idura/Criipto OIDC | $0 |
 | Encryption | KMS CMK, app-level envelope encryption for personnummer + HMAC lookup | $1.00 |
 | Secrets/config | SSM Parameter Store (standard) | $0 |
-| Front-end | Vite + React PWA, S3 + CloudFront (OAC), IndexedDB outbox for offline | ~$0 |
+| Front-end | Vite + React PWA, S3 + CloudFront (OAC), static asset caching only in MVP (no offline personal data) | ~$0 |
 | Email | SES (eu-north-1) | $0 |
 | DNS | Route 53 hosted zone, .se registered externally | $0.50 |
 | Observability | CloudWatch Logs (14–30 d retention), a few free alarms, AWS Budgets alert | ~$0.10–0.30 |
-| IaC | AWS CDK (TypeScript) | — |
+| IaC | AWS CDK (Kotlin; supersedes TypeScript, see DECISIONS.md) | — |
 | CI/CD | GitHub Actions + OIDC role, cdk diff on PR, deploy on merge | $0 |
 | **Total idle** | | **≈ $1.6–1.8/month** |
 

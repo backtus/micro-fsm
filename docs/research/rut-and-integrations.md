@@ -60,7 +60,7 @@ Conditions: the household goods must belong to the customer's household. The mov
 
 ### What must be separated
 
-Only labour **on site** qualifies. These do not qualify:
+For cleaning-type services only labour **on site** qualifies. For moving services, crew and driver time spent transporting household goods is eligible labour, while travel to and from the customer is not. These do not qualify:
 
 - materials, including consumables such as cleaning agents, which must always be charged;
 - travel time to and from the customer;
@@ -281,7 +281,7 @@ Only Sweden uses the model where the company invoices net of the deduction and c
 - **Data model**
   - Job lines need a cost type: labour, material, travel/other, or no reduction.
   - Each line needs a RUT service type: cleaning or moving.
-  - Record **actual hours on site** per service type, separately from billed hours, because fixed-price jobs still need actual hours.
+  - Record **actual hours worked** per service type (on site for cleaning; including transport time for moving), separately from billed hours, because fixed-price jobs still need actual hours.
 - **Customers**
   - Private or company flag.
   - Personnummer, validated with the Luhn check digit (the check digit in the personnummer); buyer must be 18+ in the payment year.
@@ -308,12 +308,14 @@ Only Sweden uses the model where the company invoices net of the deduction and c
 
 ### Recommendation
 
+> **Superseded by DECISIONS.md 2026-10-29 Product scope:** the MVP includes RUT XML-file generation (Begaran.xsd v6), payment tracking and the 31 Jan reminder. The Fortnox integration is the first post-MVP item, not an MVP item, and Spiris comes later. Where the list below conflicts, DECISIONS.md wins.
+
 - **MVP**
   - Correct RUT-ready quotes and invoices (the split, buyers and actual hours).
   - Payment tracking.
   - A "RUT claims due" list with a deadline reminder.
   - **Generate the Skatteverket XML (v6, RUT only) for the user to upload.**
-  - One accounting integration: **Fortnox**. It is the largest and its API carries RUT natively. Push customers, articles and invoices with `HouseWork` fields so that Fortnox can also create the Skatteverket file.
+  - ~~One accounting integration: **Fortnox**.~~ (Superseded: first post-MVP item.) It is the largest and its API carries RUT natively. Push customers, articles and invoices with `HouseWork` fields so that Fortnox can also create the Skatteverket file.
   - Pick one path per customer to avoid double claims: our XML or Fortnox's file.
   - Masked personnummer, DPA, EU hosting.
 - **Later**

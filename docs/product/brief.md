@@ -45,7 +45,7 @@ Small Swedish cleaning and moving companies (städ/flytt) run operations from Ex
 ## 4. Differentiation hypothesis
 
 1. **Built for the owner who is in the field:** every manager action (reschedule, cover a sick call, mark done) in under 30 seconds on a phone. Competitors appear desktop-first (unverified).
-2. **RUT correct by construction:** automatic labour/material split, annual cap check per customer, missing fields flagged *before* invoicing. Fewer rejections, faster cash.
+2. **RUT correct by construction:** automatic labour/material split, local tracking of RUT invoiced by us plus the customer-declared remaining allowance (the system cannot see deductions via other suppliers and cannot guarantee eligibility), missing fields flagged *before* invoicing. Fewer rejections, faster cash.
 3. **Recurring cleaning as a first-class concept:** same cleaner, same customer, every other Tuesday, with holiday/sick exceptions.
 4. **Simple, transparent, low price** with self-service signup — enabled by ~$0 idle infrastructure.
 5. **Multilingual field view** (Swedish/English first, more later).
@@ -63,9 +63,12 @@ All need validation; 1 and 2 are the strongest bets.
 - **Field worker "Min dag" (PWA):** today's jobs in order, map link, access notes, start/stop or actual hours, mark done, note.
 - **Manager week view:** staff × days; unassigned/unfinished highlighted; quick reassign.
 - **Invoice basis with RUT split:** per job or per customer per month; labour/material split, RUT amount, amount payable; validation of required RUT fields.
-- **Export:** CSV/PDF invoice basis for manual entry in Fortnox. Fortnox API push is the first post-MVP item unless interviews make it a must-have.
+- **Export:** CSV/PDF invoice basis for manual entry in accounting.
+- **RUT claim file:** Skatteverket XML (Begaran.xsd v6) for the user to upload.
+- **Payment tracking** and a **RUT deadline reminder** (31 Jan).
+- **Offline:** the PWA caches static app assets only. Offline storage of personal data on devices is out of MVP until data categories, protection and deletion rules are decided.
 
-**Out:** Visma integration; Skatteverket claim file; payroll; mileage log; quotes and self-booking; SMS reminders to customers; customer portal; route optimisation; checklists/photos; moving-specific features (volume, trucks — moving uses the same job model); offline-first sync beyond basic PWA caching; languages beyond Swedish (English fallback); Norway/Denmark.
+**Out:** Fortnox API integration (first post-MVP item); Spiris/Visma integration; payroll; mileage log; quotes and self-booking; SMS reminders to customers; customer portal; route optimisation; checklists/photos; moving-specific features (volume, trucks — moving uses the same job model); offline storage of personal data and offline-first sync; languages beyond Swedish (English fallback); Norway/Denmark.
 
 ## 6. Walking skeleton
 
@@ -103,8 +106,4 @@ All need validation; 1 and 2 are the strongest bets.
 ## 9. Open questions for Kent
 
 1. Access to real companies for interviews and a pilot? Who is the first design partner?
-2. Fortnox in MVP or post-MVP? (Recommendation: CSV/PDF first.)
-3. Cleaning first, moving later? (Recommendation: yes.)
-4. Database choice — see architecture ADR.
-5. Ambition: side-income micro-SaaS (e.g. 50 customers × ~600 SEK) or venture-scale? Changes investment in integrations and sales.
-6. Brand/name and domain; Swedish-only UI at launch?
+2. Brand/name and domain; Swedish-only UI at launch?

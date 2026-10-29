@@ -2,9 +2,17 @@
 
 Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 
+## 2026-10-29 — Personal data inventory
+
+- **Decision:** Personal data is limited to these categories and purposes: customer identity, contact and address (service delivery, invoicing); personnummer (RUT claim only, encrypted); property identifiers for RUT where needed; access notes and door codes (job access, encrypted); worker identity and contact (scheduling); assignments and time reports (scheduling, invoicing, RUT actual hours); free-text job notes (operational instructions only; UI guidance tells users not to enter sensitive data such as health information). Retention is TBD, with the 7-year bookkeeping requirement as a consideration. The MVP stores no personal data offline on devices.
+- **Context:** GDPR; offline storage rules are undecided, so MVP caches static assets only.
+- **Alternatives:** none considered; collecting less is preferred.
+- **Consequences:** Retention and deletion rules must be decided before launch; each new data field must map to a purpose here.
+
 ## 2026-10-29 — Product scope and ambition
 
 - **Decision:** Side-income micro-SaaS; keep ambition low and achievable. Segment order: home cleaning → move-out cleaning (flyttstädning) → possibly moving. RUT support at XML-file level (Skatteverket upload, schema v6) in MVP; Fortnox integration is the first post-MVP item; Spiris later.
+- **Alternatives:** venture-scale ambition; Fortnox in MVP (rejected).
 - **Context:** Kent's direction. One potential design partner (the person who asked for this) — needs something concrete to see before any promises.
 - **Consequences:** Prioritise a showable demo early. Avoid investments that only pay off at scale (partner programmes, sales tooling, BankID).
 
@@ -12,10 +20,13 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 
 - **Decision:** Removed the MIT license; the code is proprietary (all rights reserved).
 - **Context:** Commercial SaaS.
+- **Alternatives:** keep MIT (open source).
+- **Consequences:** none.
 
 ## 2026-10-29 — IaC language: Kotlin
 
 - **Decision:** AWS CDK written in Kotlin.
+- **Context:** One language across the stack.
 - **Alternatives:** TypeScript (best CDK ergonomics and examples).
 - **Consequences:** One language across the stack; fewer copy-paste examples, some verbosity.
 
@@ -23,7 +34,7 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 
 - **Decision:** Aurora DSQL (Postgres-compatible, scale-to-zero, no VPC) with a shared schema, `tenant_id` on every table, UUIDv7 keys. Adoption conditional on a 1-day spike proving Quarkus + Hibernate/Panache + Flyway + DSQL connector + optimistic-concurrency retries work in eu-north-1.
 - **Context:** Relational domain; idle cost must be ~$0; Lambda outside VPC avoids NAT cost.
-- **Alternatives:** DynamoDB single-table (true $0, but awkward for scheduling/reporting queries and our relational model); Aurora Serverless v2 (full Postgres, but ~15 s resume and VPC, ~$40+/month realistic); Neon (not in Stockholm).
+- **Alternatives:** DynamoDB single-table (true $0, but awkward for scheduling/reporting queries and our relational model); Aurora Serverless v2 (full Postgres, but ~15 s resume and VPC, ~$40+/month realistic); Neon (not in Stockholm). Aurora/Neon are not fallbacks.
 - **Consequences:** No pgcrypto/extensions → app-level encryption. One DDL per transaction affects migrations. If the spike fails, fall back to DynamoDB.
 
 ## 2026-10-29 — Lambda runtime: JVM + SnapStart (arm64), native-ready
@@ -36,16 +47,20 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 ## 2026-10-29 — Auth: Cognito Essentials; BankID later via broker
 
 - **Decision:** Cognito user pool with tenant id in token claims; JWT authorizer on API Gateway. BankID added post-MVP via a broker (e.g. Criipto/Idura).
+- **Context:** Cheap, AWS-native, tenant claims in token.
 - **Alternatives:** Direct BankID (SEK 80–250k setup); third-party IdPs (Auth0 etc., cost).
 - **Consequences:** Free up to 10k MAU.
 
 ## 2026-10-29 — Personal data encryption
 
 - **Decision:** Personnummer and access notes encrypted in the application with one KMS customer-managed key (envelope encryption); keyed hash (HMAC) for lookup.
+- **Context:** Personnummer is sensitive; DSQL lacks pgcrypto.
+- **Alternatives:** database-level encryption only (unavailable on DSQL).
 - **Consequences:** ~$1/month fixed cost per key.
 
 ## 2026-10-29 — Front end, IaC, CI
 
+- **Context:** Cheap static hosting, keyless CI.
 - **Decision:** Vite + React PWA on S3 + CloudFront. AWS CDK for IaC, written in Kotlin. GitHub Actions with OIDC to AWS — no long-lived keys.
 - **Alternatives:** SAM (less flexible), Terraform/OpenTofu (state backend to manage, separate language).
 - **Consequences:** Estimated idle bill ~$1.60–1.80/month per environment.
