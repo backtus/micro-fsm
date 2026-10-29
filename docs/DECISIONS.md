@@ -9,6 +9,21 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 - **Alternatives:** UI framework (rejected: more weight, little value for a small demo).
 - **Consequences:** RUT rounding (down to whole kronor) is provisional until checked against Begaran.xsd.
 
+## 2026-10-29 — Backend skeleton: toolchain and dependencies
+
+- **Decision:** Java 25 (`java25` Lambda runtime, Amazon Linux 2023, deprecation 2029-06-30; newest LTS Lambda offers, SnapStart supported in supported Regions — eu-north-1 still to verify in the spike). Quarkus 3.40.1 (Hibernate ORM 7.4, so `@UuidGenerator(style = VERSION_7)` is used and no in-house UUIDv7 generator), Kotlin 2.4.21, Gradle 9.8.2 (Kotlin DSL, version catalog, foojay toolchain resolver 1.0.0 to auto-provision the JDK).
+- **Dependencies (reasons):**
+  - `quarkus-amazon-lambda-http` — run JAX-RS app behind API Gateway HTTP API; produces `function.zip`.
+  - `quarkus-rest`, `quarkus-rest-jackson`, `jackson-module-kotlin` — REST + JSON with Kotlin data classes.
+  - `quarkus-kotlin` — Kotlin support in Quarkus.
+  - `quarkus-hibernate-orm-panache-kotlin` — persistence (repository style).
+  - `quarkus-jdbc-postgresql` — PostgreSQL driver / Dev Services (DSQL is PG-compatible).
+  - `quarkus-flyway`, `quarkus-flyway-postgresql` — migrations (Flyway 12; PostgreSQL module needed for Flyway's PG support).
+  - Test only: `quarkus-junit`, `rest-assured`, `assertj-core`.
+- **Context:** A1 spike; DSQL decision depends on this skeleton working.
+- **Alternatives:** Java 21 (older LTS); in-house UUIDv7 generator (unneeded); AWS Advanced JDBC Wrapper DSQL plugin (heavier).
+- **Consequences:** Flyway's PostgreSQL transactional lock is turned off and `${index_async}` is supplied by a `FlywayConfigurationCustomizer` (a Quarkus property cannot hold an empty value).
+
 ## 2026-10-29 — Personal data inventory
 
 - **Decision:** Personal data is limited to these categories and purposes: customer identity, contact and address (service delivery, invoicing); personnummer (RUT claim only, encrypted); property identifiers for RUT where needed; access notes and door codes (job access, encrypted); worker identity and contact (scheduling); assignments and time reports (scheduling, invoicing, RUT actual hours); free-text job notes (operational instructions only; UI guidance tells users not to enter sensitive data such as health information). Retention is TBD, with the 7-year bookkeeping requirement as a consideration. The MVP stores no personal data offline on devices.

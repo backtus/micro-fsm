@@ -1,0 +1,16 @@
+[versions]
+kotlin = "2.4.21"
+quarkus = "3.40.1"
+dsql-connector = "1.5.1"
+assertj = "3.27.3"
+rest-assured = "5.5.1"
+
+[libraries]
+quarkus-bom = { module = "io.quarkus.platform:quarkus-bom", version.ref = "quarkus" }
+dsql-jdbc-connector = { module = "software.amazon.dsql:aurora-dsql-jdbc-connector", version.ref = "dsql-connector" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-allopen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin" }
+kotlin-noarg = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin" }
+quarkus = { id = "io.quarkus", version.ref = "quarkus" }
