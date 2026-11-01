@@ -10,9 +10,11 @@ import software.amazon.awscdk.Tags
 import software.amazon.awscdk.CfnTag
 import software.amazon.awscdk.aws_apigatewayv2_integrations.HttpLambdaIntegration
 import software.amazon.awscdk.services.apigatewayv2.HttpApi
-import software.amazon.awscdk.services.budgets.CfnBudget
 import software.amazon.awscdk.services.dsql.CfnCluster
 import software.amazon.awscdk.services.iam.PolicyStatement
+import software.amazon.awscdk.services.iam.Role
+import software.amazon.awscdk.services.iam.ServicePrincipal
+import software.amazon.awscdk.services.iam.ManagedPolicy
 import software.amazon.awscdk.services.lambda.Alias
 import software.amazon.awscdk.services.lambda.Architecture
 import software.amazon.awscdk.services.lambda.Code
@@ -24,10 +26,10 @@ import software.amazon.awscdk.services.logs.RetentionDays
 import software.constructs.Construct
 
 /**
- * Spike stack: Aurora DSQL + Quarkus Lambda (SnapStart, arm64) behind an HTTP API, plus a 10 USD budget.
+ * Spike stack: Aurora DSQL + Quarkus Lambda (SnapStart, arm64) behind an HTTP API, (budget: see [MicroFsmAccountBaselineStack]).
  * @param code Lambda package (backend `function.zip`, built with QUARKUS_PROFILE=dsql).
  */
-class MicroFsmSpikeStack(scope: Construct, id: String, props: StackProps, code: Code, budgetEmail: String) :
+class MicroFsmSpikeStack(scope: Construct, id: String, props: StackProps, code: Code) :
     Stack(scope, id, props) {
 
     init {
@@ -42,6 +44,7 @@ class MicroFsmSpikeStack(scope: Construct, id: String, props: StackProps, code: 
 
         val env = mapOf(
             "QUARKUS_PROFILE" to "dsql",
+            "APP_MIGRATE_ENDPOINT_ENABLED" to "false",
             "QUARKUS_DATASOURCE_JDBC_URL" to Fn.join("", listOf("jdbc:aws-dsql:postgresql://", endpoint, "/postgres")),
         )
         val handler = "io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest"
@@ -51,12 +54,20 @@ class MicroFsmSpikeStack(scope: Construct, id: String, props: StackProps, code: 
             .removalPolicy(RemovalPolicy.DESTROY)
             .build()
 
+        // Explicit role names keep IAM inside the micro-fsm-* prefix that the scoped CloudFormation execution policy allows.
+        fun role(name: String) = Role.Builder.create(this, "${name}Role")
+            .roleName("micro-fsm-${name.lowercase()}")
+            .assumedBy(ServicePrincipal("lambda.amazonaws.com"))
+            .managedPolicies(listOf(ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")))
+            .build()
+
         val api = Function.Builder.create(this, "Api")
             .runtime(Runtime.JAVA_25)
             .architecture(Architecture.ARM_64)
             .memorySize(1024)
             .timeout(Duration.seconds(30))
             .handler(handler)
+            .role(role("Api"))
             .code(code)
             .snapStart(SnapStartConf.ON_PUBLISHED_VERSIONS)
             .environment(env)
@@ -75,6 +86,7 @@ class MicroFsmSpikeStack(scope: Construct, id: String, props: StackProps, code: 
             .memorySize(1024)
             .timeout(Duration.minutes(5))
             .handler(handler)
+            .role(role("Migrate"))
             .code(code)
             .environment(env + ("APP_MIGRATE_ENDPOINT_ENABLED" to "true"))
             .logGroup(logGroup("Migrate"))
@@ -89,31 +101,6 @@ class MicroFsmSpikeStack(scope: Construct, id: String, props: StackProps, code: 
 
         val httpApi = HttpApi.Builder.create(this, "HttpApi")
             .defaultIntegration(HttpLambdaIntegration("LiveIntegration", alias))
-            .build()
-
-        CfnBudget.Builder.create(this, "Budget")
-            .budget(
-                CfnBudget.BudgetDataProperty.builder()
-                    .budgetType("COST")
-                    .timeUnit("MONTHLY")
-                    .budgetLimit(CfnBudget.SpendProperty.builder().amount(10).unit("USD").build())
-                    .build(),
-            )
-            .notificationsWithSubscribers(
-                listOf(50, 80, 100).map { pct ->
-                    CfnBudget.NotificationWithSubscribersProperty.builder()
-                        .notification(
-                            CfnBudget.NotificationProperty.builder()
-                                .notificationType("ACTUAL")
-                                .comparisonOperator("GREATER_THAN")
-                                .threshold(pct)
-                                .thresholdType("PERCENTAGE")
-                                .build(),
-                        )
-                        .subscribers(listOf(CfnBudget.SubscriberProperty.builder().subscriptionType("EMAIL").address(budgetEmail).build()))
-                        .build()
-                },
-            )
             .build()
 
         CfnOutput(this, "ApiUrl", software.amazon.awscdk.CfnOutputProps.builder().value(httpApi.apiEndpoint).build())

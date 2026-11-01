@@ -1,0 +1,28 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {"Sid": "Workload", "Effect": "Allow",
+     "Action": ["dsql:*", "lambda:*", "apigateway:*", "logs:*"], "Resource": "*"},
+    {"Sid": "RolesAndPoliciesWithPrefix", "Effect": "Allow",
+     "Action": ["iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:UpdateRole", "iam:TagRole", "iam:UntagRole",
+                "iam:PassRole", "iam:PutRolePolicy",
+                "iam:DeleteRolePolicy", "iam:GetRolePolicy", "iam:ListRolePolicies", "iam:ListAttachedRolePolicies",
+                "iam:CreatePolicy", "iam:DeletePolicy", "iam:GetPolicy", "iam:CreatePolicyVersion",
+                "iam:DeletePolicyVersion", "iam:GetPolicyVersion", "iam:ListPolicyVersions"],
+     "Resource": ["arn:aws:iam::*:role/micro-fsm-*", "arn:aws:iam::*:policy/micro-fsm-*"]},
+    {"Sid": "DsqlServiceLinkedRole", "Effect": "Allow",
+     "Action": "iam:CreateServiceLinkedRole",
+     "Resource": "arn:aws:iam::*:role/aws-service-role/dsql.amazonaws.com/*"},
+    {"Sid": "AttachAwsLambdaBasicExecutionOnly", "Effect": "Allow",
+     "Action": ["iam:AttachRolePolicy", "iam:DetachRolePolicy"],
+     "Resource": "arn:aws:iam::*:role/micro-fsm-*",
+     "Condition": {"ArnEquals": {"iam:PolicyARN": "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"}}},
+    {"Sid": "CdkAssets", "Effect": "Allow",
+     "Action": ["s3:GetObject", "s3:GetBucketLocation", "s3:ListBucket", "ecr:GetAuthorizationToken"],
+     "Resource": "*"},
+    {"Sid": "CdkBootstrapVersion", "Effect": "Allow",
+     "Action": "ssm:GetParameter", "Resource": "arn:aws:ssm:*:*:parameter/cdk-bootstrap/*"},
+    {"Sid": "BudgetsBaselineOnly", "Effect": "Allow",
+     "Action": ["budgets:*"], "Resource": "*"}
+  ]
+}

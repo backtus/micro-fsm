@@ -7,6 +7,9 @@ import software.amazon.awscdk.services.lambda.Code
 
 const val REGION = "eu-north-1"
 
+/** AWS Budgets is unavailable in eu-north-1; billing metadata only. */
+const val BASELINE_REGION = "us-east-1"
+
 fun main() {
     val app = App()
     val email = app.node.tryGetContext("budgetEmail") as? String
@@ -16,10 +19,9 @@ fun main() {
     val zip = (app.node.tryGetContext("lambdaZip") as? String) ?: "../backend/build/function.zip"
     // Account comes from the CLI environment (credentials); not hard-coded.
     val account = System.getenv("CDK_DEFAULT_ACCOUNT")
-    MicroFsmSpikeStack(
-        app, "MicroFsmSpikeStack",
-        StackProps.builder().env(Environment.builder().account(account).region(REGION).build()).build(),
-        Code.fromAsset(zip), email,
-    )
+    fun props(region: String) = StackProps.builder().env(Environment.builder().account(account).region(region).build()).build()
+    val baseline = MicroFsmAccountBaselineStack(app, "MicroFsmAccountBaselineStack", props(BASELINE_REGION), email)
+    val spike = MicroFsmSpikeStack(app, "MicroFsmSpikeStack", props(REGION), Code.fromAsset(zip))
+    spike.addDependency(baseline) // deploy the budget first
     app.synth()
 }

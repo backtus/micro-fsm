@@ -12,6 +12,11 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 ## 2026-10-29 — Project shelved
 
 - **Decision:** Shelve micro-fsm. Keep the repo intact as a reference and as the factory's first case study.
+- **Consequences:** No support or maintenance promised (README says so). Competitor information is a dated snapshot and carries a caveat. If the project is revived commercially, the code already published stays MIT; only new work could be licensed differently.
+
+## 2026-10-29 — Project shelved
+      
+- **Decision:** Shelve micro-fsm. Keep the repo intact as a reference and as the factory's first case study.
 - **Context:** Kent is not interested in running a cleaning-industry business; he prefers offering the software factory as a service. Free/ad-funded "SaaS 2.0" was considered and rejected (data contains home addresses, door codes and absence times; processor may not reuse it; scale-dependent model conflicts with side-income ambition).
 - **Alternatives:** Norway window-cleaning niche; partnering with a personal contact in the Swedish market.
 - **Consequences:** No further build or AWS spend. PR #5 closed with branch kept.
@@ -22,6 +27,12 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 - **Context:** Wisegent (Märsta, since 2016) already offers our full Swedish MVP and more (RUT XML, Fortnox partner, native apps, customer portal, autogiro) from 199 SEK/month; Upflow covers the same niche. Kent has a network in Norwegian cleaning/window cleaning; Wisegent has no Norwegian language.
 - **Alternatives:** Compete in Sweden on UX/price (rejected: 10-year head start, remote founder); shelve product.
 - **Consequences:** PR #5 and AWS setup paused. Domain-neutral assets (backend skeleton, CI, migrator, scheduling UI) are reusable; RUT-specific logic may become Sweden-only.
+
+## 2026-10-29 — PROPOSED: budget in us-east-1 (region exception) and scoped CloudFormation role
+
+- **Proposal:** `AWS::Budgets::Budget` is not supported in eu-north-1, so the 10 USD budget lives in a separate `MicroFsmAccountBaselineStack` in us-east-1, deployed before the spike stack. It holds billing metadata only: no workload, no personal data. This is an exception to the eu-north-1-only baseline. CDK is bootstrapped with a scoped CloudFormation execution policy (`infra/bootstrap/cfn-exec-policy.json`, IAM limited to `micro-fsm-*` roles/policies) instead of AdministratorAccess.
+- **Alternatives:** no budget (rejected: cost guard needed); budget created by hand (click-ops); AdministratorAccess execution policy (rejected: too broad).
+- **Consequences:** bootstrap in two regions; the policy may need extending after the first real deploy.
 
 ## 2026-10-29 — Infra spike stack: dependencies and migration invoke
 
