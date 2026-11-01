@@ -12,11 +12,6 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 ## 2026-10-29 — Project shelved
 
 - **Decision:** Shelve micro-fsm. Keep the repo intact as a reference and as the factory's first case study.
-- **Consequences:** No support or maintenance promised (README says so). Competitor information is a dated snapshot and carries a caveat. If the project is revived commercially, the code already published stays MIT; only new work could be licensed differently.
-
-## 2026-10-29 — Project shelved
-      
-- **Decision:** Shelve micro-fsm. Keep the repo intact as a reference and as the factory's first case study.
 - **Context:** Kent is not interested in running a cleaning-industry business; he prefers offering the software factory as a service. Free/ad-funded "SaaS 2.0" was considered and rejected (data contains home addresses, door codes and absence times; processor may not reuse it; scale-dependent model conflicts with side-income ambition).
 - **Alternatives:** Norway window-cleaning niche; partnering with a personal contact in the Swedish market.
 - **Consequences:** No further build or AWS spend. PR #5 closed with branch kept.
