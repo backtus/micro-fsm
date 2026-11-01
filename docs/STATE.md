@@ -11,7 +11,6 @@ Kent chose not to pursue the cleaning business. Sweden: Wisegent and Upflow alre
 - Product brief and research: Sweden (RUT, architecture), Norway (regulation, competitors).
 - Clickable Swedish demo in `web/` (`npm --prefix web ci && npm --prefix web run dev`).
 - Backend skeleton (Quarkus/Kotlin, DSQL-safe migrator, OCC retry) and CI — green.
-- Unmerged: CDK spike stack (PR #5, closed, branch kept).
 
 ## Open source
 Published under MIT on 2026-11-01 (see DECISIONS.md). No support is offered.

@@ -15,16 +15,16 @@ Fixed constraints: Kotlin + Quarkus on Lambda, eu-north-1, fully serverless, idl
 
 ### Comparison
 
-| | DynamoDB | Aurora DSQL | Aurora Serverless v2 (0 ACU) | Neon (Frankfurt) |
-|---|---|---|---|---|
-| Idle cost | ~$0 | ~$0 (free tier) | ~$1–3 storage, + VPC endpoint/NAT costs if needed | $0 (free tier) |
-| ~50 tenants | ~$1–5 | ~$2–10 (⚠️ DPU per query is hard to predict; measure) | $45+ when awake (min 0.5 ACU ≈ $0.06/h) | $0–19 |
-| Dev ergonomics | Poor for relational + reporting | Good (SQL), some quirks | Best (plain Postgres) | Best + branching |
-| Quarkus/Kotlin fit | Enhanced client OK; no Panache | JDBC + Hibernate via DSQL connector; spike needed | Native Hibernate/Panache/Flyway | Native |
-| Lock-in | High | Medium (Postgres-ish SQL portable) | Low | Low |
-| eu-north-1 | ✅ | ✅ | ✅ | ❌ (Frankfurt) |
-| Cold path | none | none | ~15 s resume | ~0.5–1 s |
-| Tenant isolation | key prefix + IAM LeadingKeys | `tenant_id` column enforced in app (Hibernate filter / `@TenantId`) | Postgres RLS possible | RLS possible |
+|                    | DynamoDB                        | Aurora DSQL                                                         | Aurora Serverless v2 (0 ACU)                      | Neon (Frankfurt) |
+|--------------------|---------------------------------|---------------------------------------------------------------------|---------------------------------------------------|------------------|
+| Idle cost          | ~$0                             | ~$0 (free tier)                                                     | ~$1–3 storage, + VPC endpoint/NAT costs if needed | $0 (free tier)   |
+| ~50 tenants        | ~$1–5                           | ~$2–10 (⚠️ DPU per query is hard to predict; measure)               | $45+ when awake (min 0.5 ACU ≈ $0.06/h)           | $0–19            |
+| Dev ergonomics     | Poor for relational + reporting | Good (SQL), some quirks                                             | Best (plain Postgres)                             | Best + branching |
+| Quarkus/Kotlin fit | Enhanced client OK; no Panache  | JDBC + Hibernate via DSQL connector; spike needed                   | Native Hibernate/Panache/Flyway                   | Native           |
+| Lock-in            | High                            | Medium (Postgres-ish SQL portable)                                  | Low                                               | Low              |
+| eu-north-1         | ✅                              | ✅                                                                  | ✅                                                | ❌ (Frankfurt)   |
+| Cold path          | none                            | none                                                                | ~15 s resume                                      | ~0.5–1 s         |
+| Tenant isolation   | key prefix + IAM LeadingKeys    | `tenant_id` column enforced in app (Hibernate filter / `@TenantId`) | Postgres RLS possible                             | RLS possible     |
 
 ### Recommendation: Aurora DSQL
 
@@ -39,13 +39,13 @@ Revisit if: the spike shows Hibernate/Flyway friction that costs more than a day
 - **JVM (Java 21/25 managed runtime) + SnapStart** — SnapStart supports arm64 since July 2024 ([aws-news](https://aws-news.com/article/2024-07-18-aws-lambda-now-supports-snapstart-for-java-functions-that-use-the-arm64-architecture)); regional availability is listed in the [SnapStart docs](https://docs.aws.amazon.com/lambda/latest/dg/snapstart.html) ⚠️ confirm eu-north-1 in the console (expected, not verified here). Typical Quarkus restore ~300–700 ms cold (vs 2–4 s without), warm latency fine. SnapStart is free for Java (caching/restore charges apply only to Python/.NET). Standard `mvn/gradle package` → zip; simple CI. Caveats: needs published versions/aliases; DB connections and random seeds must be re-established after restore (Quarkus has SnapStart hooks; use a priming hook).
 - **Native (Mandrel/GraalVM, arm64, `provided.al2023`)** — cold start ~150–300 ms, lower memory (128–256 MB OK), cheapest per invocation. Build: 3–8 min, 6–8 GB RAM, must build on arm64 (GitHub `ubuntu-24.04-arm` runners or container build). Reflection config for Kotlin, Jackson, Hibernate and the AWS SDK occasionally breaks; failures appear only in the native build — costly debugging for AI agents.
 
-| | JVM + SnapStart | Native (Mandrel arm64) |
-|---|---|---|
-| Cold start | ~0.3–0.7 s ⚠️ measure | ~0.15–0.3 s |
-| Build time / CI | ~1 min, any runner | 3–8 min, arm64 runner, high RAM |
-| Kotlin/library fit | Everything works | Reflection/registration issues possible |
-| Idle cost | $0 | $0 |
-| Cost at small scale | Free tier covers it | Free tier covers it |
+|                     | JVM + SnapStart       | Native (Mandrel arm64)                  |
+|---------------------|-----------------------|-----------------------------------------|
+| Cold start          | ~0.3–0.7 s ⚠️ measure | ~0.15–0.3 s                             |
+| Build time / CI     | ~1 min, any runner    | 3–8 min, arm64 runner, high RAM         |
+| Kotlin/library fit  | Everything works      | Reflection/registration issues possible |
+| Idle cost           | $0                    | $0                                      |
+| Cost at small scale | Free tier covers it   | Free tier covers it                     |
 
 Recommendation: **JVM + SnapStart on arm64**, 1024 MB to start. Keep the code native-compatible (Quarkus extensions only) so native is a switch, not a rewrite.
 
@@ -74,13 +74,13 @@ Revisit if: native features (background location, reliable push on iOS, camera-h
 
 ## 5. IaC and CI
 
-| | AWS CDK (TypeScript) | AWS CDK (Kotlin/Java) | SAM | Terraform/OpenTofu |
-|---|---|---|---|---|
-| Fit for Lambda + DSQL + Cognito + CloudFront | Good, L2 constructs | Same constructs, verbose, slower synth (JVM + jsii) | Good for functions/API; weaker for CloudFront/Cognito | Good, broad |
-| AI-agent ergonomics | Best (most examples, fast synth, `cdk diff`) | OK | OK (YAML) | Good (large corpus) |
-| State | CloudFormation (no state to manage) | same | same | State backend (S3) to manage |
-| New-service lag (e.g. DSQL) | L1 available quickly ⚠️ check `AWS::DSQL::Cluster` | same | via CFN | provider usually quick |
-| Local testing | — | — | `sam local` | — |
+|                                              | AWS CDK (TypeScript)                               | AWS CDK (Kotlin/Java)                               | SAM                                                   | Terraform/OpenTofu           |
+|----------------------------------------------|----------------------------------------------------|-----------------------------------------------------|-------------------------------------------------------|------------------------------|
+| Fit for Lambda + DSQL + Cognito + CloudFront | Good, L2 constructs                                | Same constructs, verbose, slower synth (JVM + jsii) | Good for functions/API; weaker for CloudFront/Cognito | Good, broad                  |
+| AI-agent ergonomics                          | Best (most examples, fast synth, `cdk diff`)       | OK                                                  | OK (YAML)                                             | Good (large corpus)          |
+| State                                        | CloudFormation (no state to manage)                | same                                                | same                                                  | State backend (S3) to manage |
+| New-service lag (e.g. DSQL)                  | L1 available quickly ⚠️ check `AWS::DSQL::Cluster` | same                                                | via CFN                                               | provider usually quick       |
+| Local testing                                | —                                                  | —                                                   | `sam local`                                           | —                            |
 
 **Superseded by DECISIONS.md (2026-10-29, IaC language): CDK is written in Kotlin.** Original recommendation: AWS CDK in TypeScript in an `infra/` folder. TypeScript CDK is the best-documented and fastest-iterating flavour; using Kotlin for CDK buys language consistency but adds JVM/jsii overhead and fewer examples. Terraform is fine but adds state management for no gain on an AWS-only stack. Quarkus dev mode (not SAM local) for local backend work.
 
@@ -88,43 +88,43 @@ CI: **GitHub Actions with OIDC** (`aws-actions/configure-aws-credentials`, IAM r
 
 ## 6. Hidden fixed costs
 
-| Item | Cost | Notes |
-|---|---|---|
-| Route 53 hosted zone | $0.50/month | + domain (~$10–15/year for .se via registrar; .se not sold by Route 53 ⚠️ — register elsewhere, delegate NS) |
-| KMS customer-managed key | $1.00/month per key | One CMK for personnummer envelope encryption. Use AWS-managed keys elsewhere (free). Requests $0.03/10k; cache data keys. |
-| Secrets Manager | $0.40/secret/month | Avoid: DSQL uses IAM tokens (no DB password). Use **SSM Parameter Store standard SecureString** (free) for broker/API secrets. |
-| CloudWatch Logs | $0.50/GB ingest (+ storage) | Default retention is forever — set 14–30 days in CDK; log JSON at INFO. |
-| NAT gateway | ~$35/month + data | **Avoid**: keep Lambda out of VPC (possible because DSQL is public+IAM). |
-| VPC interface endpoints | ~$7–8/month each/AZ | Avoid for same reason. |
-| WAF on CloudFront/API | $5/month per web ACL + rules | Skip at MVP; use API throttling. |
-| CloudWatch alarms / dashboards | $0.10/alarm; first 10 free; dashboards 3 free | Keep within free. |
-| Cognito, Lambda, API GW, S3, CloudFront, DSQL, SES | ~$0 idle (free tiers) | SES needs domain verification; sandbox exit is free. |
-| AWS Budgets | first 2 free | Set a $5 budget alert. |
-| Public IPv4 | $0.005/h each | Not used in this design. |
-| CDK bootstrap bucket/ECR | cents | Lifecycle rule on assets. |
+| Item                                               | Cost                                          | Notes                                                                                                                          |
+|----------------------------------------------------|-----------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| Route 53 hosted zone                               | $0.50/month                                   | + domain (~$10–15/year for .se via registrar; .se not sold by Route 53 ⚠️ — register elsewhere, delegate NS)                   |
+| KMS customer-managed key                           | $1.00/month per key                           | One CMK for personnummer envelope encryption. Use AWS-managed keys elsewhere (free). Requests $0.03/10k; cache data keys.      |
+| Secrets Manager                                    | $0.40/secret/month                            | Avoid: DSQL uses IAM tokens (no DB password). Use **SSM Parameter Store standard SecureString** (free) for broker/API secrets. |
+| CloudWatch Logs                                    | $0.50/GB ingest (+ storage)                   | Default retention is forever — set 14–30 days in CDK; log JSON at INFO.                                                        |
+| NAT gateway                                        | ~$35/month + data                             | **Avoid**: keep Lambda out of VPC (possible because DSQL is public+IAM).                                                       |
+| VPC interface endpoints                            | ~$7–8/month each/AZ                           | Avoid for same reason.                                                                                                         |
+| WAF on CloudFront/API                              | $5/month per web ACL + rules                  | Skip at MVP; use API throttling.                                                                                               |
+| CloudWatch alarms / dashboards                     | $0.10/alarm; first 10 free; dashboards 3 free | Keep within free.                                                                                                              |
+| Cognito, Lambda, API GW, S3, CloudFront, DSQL, SES | ~$0 idle (free tiers)                         | SES needs domain verification; sandbox exit is free.                                                                           |
+| AWS Budgets                                        | first 2 free                                  | Set a $5 budget alert.                                                                                                         |
+| Public IPv4                                        | $0.005/h each                                 | Not used in this design.                                                                                                       |
+| CDK bootstrap bucket/ECR                           | cents                                         | Lifecycle rule on assets.                                                                                                      |
 
 Estimated idle bill (recommended stack, one environment): Route 53 $0.50 + KMS $1.00 + S3/logs/CloudWatch ~$0.10–0.30 + DSQL/Lambda/API/Cognito/CloudFront $0 ≈ **$1.60–1.80/month**. A second environment (dev + prod) adds ~$1 (another KMS key) unless dev shares the CMK or uses an AWS-managed key — recommended: separate accounts later, but share one hosted zone. ⚠️ eu-north-1 prices may differ slightly.
 
 ## 7. Recommended stack
 
-| Layer | Choice | Idle cost |
-|---|---|---|
-| Region | eu-north-1 (CloudFront/ACM global, cert in us-east-1) | — |
-| Database | Aurora DSQL, shared schema, `tenant_id` everywhere, UUIDv7 keys | ~$0 |
-| Data access | Quarkus Hibernate ORM (Panache Kotlin) + DSQL JDBC connector; Flyway/Liquibase (spike) | — |
-| Backend | Kotlin + Quarkus, one lambdalith via `quarkus-amazon-lambda-http`, Java 21+ JVM, arm64, SnapStart | $0 |
-| Background | Same artifact, extra handlers via EventBridge Scheduler / SQS | $0 |
-| API | API Gateway HTTP API + Cognito JWT authorizer | $0 |
-| Auth | Cognito Essentials (email OTP / passkeys); BankID later via Idura/Criipto OIDC | $0 |
-| Encryption | KMS CMK, app-level envelope encryption for personnummer + HMAC lookup | $1.00 |
-| Secrets/config | SSM Parameter Store (standard) | $0 |
-| Front-end | Vite + React PWA, S3 + CloudFront (OAC), static asset caching only in MVP (no offline personal data) | ~$0 |
-| Email | SES (eu-north-1) | $0 |
-| DNS | Route 53 hosted zone, .se registered externally | $0.50 |
-| Observability | CloudWatch Logs (14–30 d retention), a few free alarms, AWS Budgets alert | ~$0.10–0.30 |
-| IaC | AWS CDK (Kotlin; supersedes TypeScript, see DECISIONS.md) | — |
-| CI/CD | GitHub Actions + OIDC role, cdk diff on PR, deploy on merge | $0 |
-| **Total idle** | | **≈ $1.6–1.8/month** |
+| Layer          | Choice                                                                                               | Idle cost            |
+|----------------|------------------------------------------------------------------------------------------------------|----------------------|
+| Region         | eu-north-1 (CloudFront/ACM global, cert in us-east-1)                                                | —                    |
+| Database       | Aurora DSQL, shared schema, `tenant_id` everywhere, UUIDv7 keys                                      | ~$0                  |
+| Data access    | Quarkus Hibernate ORM (Panache Kotlin) + DSQL JDBC connector; Flyway/Liquibase (spike)               | —                    |
+| Backend        | Kotlin + Quarkus, one lambdalith via `quarkus-amazon-lambda-http`, Java 21+ JVM, arm64, SnapStart    | $0                   |
+| Background     | Same artifact, extra handlers via EventBridge Scheduler / SQS                                        | $0                   |
+| API            | API Gateway HTTP API + Cognito JWT authorizer                                                        | $0                   |
+| Auth           | Cognito Essentials (email OTP / passkeys); BankID later via Idura/Criipto OIDC                       | $0                   |
+| Encryption     | KMS CMK, app-level envelope encryption for personnummer + HMAC lookup                                | $1.00                |
+| Secrets/config | SSM Parameter Store (standard)                                                                       | $0                   |
+| Front-end      | Vite + React PWA, S3 + CloudFront (OAC), static asset caching only in MVP (no offline personal data) | ~$0                  |
+| Email          | SES (eu-north-1)                                                                                     | $0                   |
+| DNS            | Route 53 hosted zone, .se registered externally                                                      | $0.50                |
+| Observability  | CloudWatch Logs (14–30 d retention), a few free alarms, AWS Budgets alert                            | ~$0.10–0.30          |
+| IaC            | AWS CDK (Kotlin; supersedes TypeScript, see DECISIONS.md)                                            | —                    |
+| CI/CD          | GitHub Actions + OIDC role, cdk diff on PR, deploy on merge                                          | $0                   |
+| **Total idle** |                                                                                                      | **≈ $1.6–1.8/month** |
 
 ## Key uncertainties to resolve early
 

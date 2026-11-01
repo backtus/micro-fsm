@@ -8,15 +8,13 @@ It was built with an agent-driven "software factory" workflow (planner, builder 
 
 ## What is here
 
-| Path | What |
-|---|---|
-| `web/` | Clickable Swedish prototype (React, Vite, plain CSS Modules). Owner week view, field worker "Min dag", RUT invoice basis. All data is invented; there is no backend and no real personnummer. |
-| `backend/` | Quarkus + Kotlin skeleton for AWS Lambda: tenant-scoped job slice, OCC retry on SQLSTATE 40001, and an in-house `Migrator` that works with Aurora DSQL (no advisory locks, one DDL per transaction, lint test for DSQL rules). |
-| `docs/research/` | Sources-backed research: Swedish RUT rules, Skatteverket XML and Fortnox/Spiris integrations, AWS architecture options and costs, Norwegian regulation and competitors. |
-| `docs/product/brief.md` | Product brief and MVP scope. The competitor section is a dated snapshot, see the caveat in the file. |
-| `docs/DECISIONS.md` | ADRs: Aurora DSQL, Lambda with SnapStart, Cognito, encryption of personal data, why no Flyway, and so on. |
-
-The unmerged branch `feat/infra-spike` has an AWS CDK stack written in Kotlin (DSQL cluster, SnapStart Lambda, HTTP API, budget alarm). It was synthesized and tested but never deployed.
+| Path                    | What                                                                                                                                                                                                                           |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `web/`                  | Clickable Swedish prototype (React, Vite, plain CSS Modules). Owner week view, field worker "Min dag", RUT invoice basis. All data is invented; there is no backend and no real personnummer.                                  |
+| `backend/`              | Quarkus + Kotlin skeleton for AWS Lambda: tenant-scoped job slice, OCC retry on SQLSTATE 40001, and an in-house `Migrator` that works with Aurora DSQL (no advisory locks, one DDL per transaction, lint test for DSQL rules). |
+| `docs/research/`        | Sources-backed research: Swedish RUT rules, Skatteverket XML and Fortnox/Spiris integrations, AWS architecture options and costs, Norwegian regulation and competitors.                                                        |
+| `docs/product/brief.md` | Product brief and MVP scope. The competitor section is a dated snapshot, see the caveat in the file.                                                                                                                           |
+| `docs/DECISIONS.md`     | ADRs: Aurora DSQL, Lambda with SnapStart, Cognito, encryption of personal data, why no Flyway, and so on.                                                                                                                      |
 
 ## Try it
 

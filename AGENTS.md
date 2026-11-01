@@ -26,6 +26,20 @@ Read `docs/STATE.md` first. Decisions in `docs/DECISIONS.md`, priorities in `doc
 - CI (`.github/workflows/ci.yml`, actions pinned to major versions): runs the same `web` and `./gradlew build` commands as above on PRs and `main`; ubuntu runners have Docker, so no Podman env vars.
 - Backend notes: tenant comes from the `X-Tenant-Id` header (spike); migrations are run by `Migrator` (no Flyway, no locks), one DDL each and no DML (`MigrationLintTest` enforces DSQL rules); retries on SQLSTATE 40001 go through `OccRetry` with the transaction inside the retry loop; in dev/test the Lambda HTTP mock serializes HTTP requests, so concurrency tests call the service layer.
 
+## Infra (`infra/`, CDK in Kotlin)
+
+- `./gradlew :infra:test` — CDK assertion tests (no AWS needed; they use a dummy asset). `cd infra && npx cdk synth -c budgetEmail=you@example.com` (both stacks) synthesizes without credentials (needs `backend/build/function.zip`, or `-c lambdaZip=<path>`; CLI tested: aws-cdk 2.1146.1). `budgetEmail` is required.
+- Stacks: `MicroFsmAccountBaselineStack` (us-east-1, billing metadata only: 10 USD budget with 50/80/100% ACTUAL email alerts; region exception PROPOSED, see DECISIONS.md) and `MicroFsmSpikeStack` (eu-north-1, depends on the baseline): DSQL cluster, `Api` Lambda (java25, arm64, SnapStart, alias `live`) behind an HTTP API, `Migrate` Lambda (same zip, no SnapStart, not behind the API). Lambda roles are named `micro-fsm-*`. Account comes from the CLI credentials (`CDK_DEFAULT_ACCOUNT`).
+- Deploy steps (needs an AWS account; **do not run any of this without Kent's explicit approval**):
+  0. Verify the target account: `aws sts get-caller-identity --query Account --output text` must equal the expected account id (ask Kent). Stop if not.
+  1. `QUARKUS_PROFILE=dsql ./gradlew :backend:quarkusBuild` (the zip must be the DSQL build).
+  2. Bootstrap (**needs Kent's explicit approval**; once per account/region). Default bootstrap gives CloudFormation AdministratorAccess, so use the scoped policy in `infra/bootstrap/cfn-exec-policy.json`:
+     `aws iam create-policy --policy-name micro-fsm-cfn-exec --policy-document file://infra/bootstrap/cfn-exec-policy.json` (note the ARN), then
+     `cd infra && npx cdk bootstrap aws://<account>/eu-north-1 aws://<account>/us-east-1 --cloudformation-execution-policies arn:aws:iam::<account>:policy/micro-fsm-cfn-exec`. If a deploy fails on a missing permission, extend the policy file deliberately (do not fall back to AdministratorAccess).
+  3. `cd infra && npx cdk deploy MicroFsmAccountBaselineStack MicroFsmSpikeStack -c budgetEmail=you@example.com` (baseline first; outputs ApiUrl, MigrateFunctionName, ClusterEndpoint). Confirm the budget email subscription.
+  4. Migrate: `scripts/migrate.sh <MigrateFunctionName>` (needs `aws` and `jq`; fails on `FunctionError` or a payload `statusCode` other than 200). Run it, then run it again: the rerun must succeed with "Applied 0 migration(s)". Never run two invocations concurrently (the Migrator takes no locks). The endpoint is enabled only on that function (`APP_MIGRATE_ENDPOINT_ENABLED=true`); on the public API it is 404.
+  5. Tear down only after the spike results are recorded in `docs/research/dsql-spike-results.md` **and Kent explicitly approves deleting the DSQL cluster (data loss)**: `cd infra && npx cdk destroy MicroFsmSpikeStack MicroFsmAccountBaselineStack -c budgetEmail=you@example.com`. Destroy does not remove bootstrap resources: delete the `CDKToolkit` stack and the `cdk-hnb659fds-assets-*` bucket (empty it first) in both regions, and the `micro-fsm-cfn-exec` policy, if the account is to be cleaned up.
+
 ## Repairing a failed migration
 
 `Migrator` records each migration as `STARTED` before running it and `DONE` afterwards (table `schema_migration`). If a statement fails or a run dies mid-way, the row stays `STARTED` (an error does not prove the DDL rolled back) and every later run refuses with "Repair required". To repair (as the migration user, single writer, nothing else migrating):

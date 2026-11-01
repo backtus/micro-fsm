@@ -1,0 +1,6 @@
+{
+  "app": "../gradlew -q -p .. :infra:run",
+  "context": {
+    "@aws-cdk/aws-lambda:recognizeLayerVersion": true
+  }
+}
