@@ -26,6 +26,17 @@ Read `docs/STATE.md` first. Decisions in `docs/DECISIONS.md`, priorities in `doc
 - CI (`.github/workflows/ci.yml`, actions pinned to major versions): runs the same `web` and `./gradlew build` commands as above on PRs and `main`; ubuntu runners have Docker, so no Podman env vars.
 - Backend notes: tenant comes from the `X-Tenant-Id` header (spike); migrations are run by `Migrator` (no Flyway, no locks), one DDL each and no DML (`MigrationLintTest` enforces DSQL rules); retries on SQLSTATE 40001 go through `OccRetry` with the transaction inside the retry loop; in dev/test the Lambda HTTP mock serializes HTTP requests, so concurrency tests call the service layer.
 
+## Infra (`infra/`, CDK in Kotlin)
+
+- `./gradlew :infra:test` — CDK assertion tests (no AWS needed; they use a dummy asset). `cd infra && npx cdk synth -c budgetEmail=you@example.com` synthesizes without credentials (needs `backend/build/function.zip`, or `-c lambdaZip=<path>`; CLI tested: aws-cdk 2.1146.1). `budgetEmail` is required.
+- Stack `MicroFsmSpikeStack` (eu-north-1): DSQL cluster, `Api` Lambda (java25, arm64, SnapStart, alias `live`) behind an HTTP API, `Migrate` Lambda (same zip, no SnapStart, not behind the API), 10 USD budget. Account comes from the CLI credentials (`CDK_DEFAULT_ACCOUNT`).
+- Deploy steps (needs an AWS account; do not run without Kent's go-ahead):
+  1. `QUARKUS_PROFILE=dsql ./gradlew :backend:quarkusBuild` (the zip must be the DSQL build).
+  2. Once per account/region: `cd infra && npx cdk bootstrap aws://<account>/eu-north-1`.
+  3. `cd infra && npx cdk deploy -c budgetEmail=you@example.com` (outputs ApiUrl, MigrateFunctionName, ClusterEndpoint).
+  4. Migrate once (and after each release with new migrations), never at init: `aws lambda invoke --region eu-north-1 --function-name <MigrateFunctionName> --cli-binary-format raw-in-base64-out --payload '{"version":"2.0","routeKey":"POST /internal/migrate","rawPath":"/internal/migrate","rawQueryString":"","headers":{},"requestContext":{"http":{"method":"POST","path":"/internal/migrate","sourceIp":"127.0.0.1"}},"isBase64Encoded":false}' out.json && cat out.json` (the JSON response body contains `Applied n migration(s)`). The endpoint is enabled only on that function (`APP_MIGRATE_ENDPOINT_ENABLED=true`); on the public API it returns 404.
+  5. Tear down: `cd infra && npx cdk destroy -c budgetEmail=you@example.com` (DSQL deletion protection and log-group retention are off in the spike).
+
 ## Repairing a failed migration
 
 `Migrator` records each migration as `STARTED` before running it and `DONE` afterwards (table `schema_migration`). If a statement fails or a run dies mid-way, the row stays `STARTED` (an error does not prove the DDL rolled back) and every later run refuses with "Repair required". To repair (as the migration user, single writer, nothing else migrating):

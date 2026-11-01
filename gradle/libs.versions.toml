@@ -3,9 +3,13 @@ kotlin = "2.4.21"
 quarkus = "3.40.1"
 dsql-connector = "1.5.1"
 assertj = "3.27.3"
+awscdk = "2.275.0"
+constructs = "10.8.1"
 rest-assured = "5.5.1"
 
 [libraries]
+aws-cdk-lib = { module = "software.amazon.awscdk:aws-cdk-lib", version.ref = "awscdk" }
+constructs = { module = "software.constructs:constructs", version.ref = "constructs" }
 quarkus-bom = { module = "io.quarkus.platform:quarkus-bom", version.ref = "quarkus" }
 dsql-jdbc-connector = { module = "software.amazon.dsql:aurora-dsql-jdbc-connector", version.ref = "dsql-connector" }
 
