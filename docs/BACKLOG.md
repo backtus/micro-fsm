@@ -20,3 +20,5 @@ Ordered by priority. Move items to STATE.md when started.
 ## Follow-ups from review
 - Backend: automated packaged-JAR resource-loading test for `Migrator` (current tests use exploded resources).
 - Backend: document reset of local schemas created by the first migrator version (no `state` column).
+- CI: pin GitHub Actions to full commit SHAs with version comments.
+- Web: `jobs.test.ts` — assert material/travel amounts and an independently calculated labour/RUT for a fractional-hours case.
