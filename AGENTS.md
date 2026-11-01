@@ -1,6 +1,6 @@
 # micro-fsm
 
-Field Service Management Micro-SaaS for small Swedish (Nordic) cleaning and moving companies. Built by the software factory (`~/dev/software-factory`); follow its `AGENTS.md` and `policies/`.
+Field Service Management Micro-SaaS for small Swedish (Nordic) cleaning and moving companies. Built with an agent-driven "software factory" process (planner, builder and reviewer agents working through PRs).
 
 ## Context
 

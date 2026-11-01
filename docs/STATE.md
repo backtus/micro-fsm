@@ -13,5 +13,8 @@ Kent chose not to pursue the cleaning business. Sweden: Wisegent and Upflow alre
 - Backend skeleton (Quarkus/Kotlin, DSQL-safe migrator, OCC retry) and CI — green.
 - Unmerged: CDK spike stack (PR #5, closed, branch kept).
 
+## Open source
+Published under MIT on 2026-11-01 (see DECISIONS.md). No support is offered.
+
 ## If revived
 Start with interviews (window cleaners in Trondheim), then decide AWS security boundary before resuming PR #5.

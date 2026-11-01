@@ -1,6 +1,6 @@
 # Product Brief — micro-fsm
 
-> **Status:** DRAFT for Kent's review (planner agent, 2026-10-29). **Research caveat:** competitor pricing and features are *(unverified)* — do a proper competitor pass before any pricing decision.
+> **Status:** Draft from 2026-10-29; the project is shelved (see `STATE.md`). **Research caveat:** the competitor overview is a snapshot of public marketing pages from October 2026. Prices and features were not verified, may be outdated or wrong, and are not an assessment of the products' quality. Do your own competitor pass before relying on them.
 
 ## 1. Problem and target customer
 
@@ -29,22 +29,22 @@ Small Swedish cleaning and moving companies (städ/flytt) run operations from Ex
 
 | Product | Positioning | Pricing | Notes / gaps |
 |---|---|---|---|
-| Upflow (Serviq) — [Fortnox](https://www.fortnox.se/integrationer/integration/upflow-en-del-av-serviq-connected-ab/upflow-for-stad-flyttfirmor) | All-in-one for städ/flytt: quotes, scheduling, work orders, Fortnox invoicing, RUT | unverified | **Closest direct competitor.** Check depth and UX. |
-| Wisegent — [wisegent.se](https://wisegent.se/se) | Cleaning-specific scheduling, free "AI scheduling", key handling, RUT invoicing | unverified | Direct competitor with a free hook. |
-| Bokning & Schema Online (Bird Vision) — [Fortnox](https://www.fortnox.se/integrationer/integration/bird-vision-ab/bokning-schema-online) | Quotes, scheduling, Fortnox invoicing, time reporting | unverified | Generic, older. |
-| Easyserv | Field service / work orders | unverified | Broader, heavier; less household/RUT focus. |
-| Timewise | Staff scheduling (healthcare, retail) | unverified | Not field jobs. |
-| Moment | Projects/time/invoicing for agencies | unverified | Wrong vertical. |
-| Fieldly | Construction/trades (ROT) | unverified | ROT, not RUT. |
-| Bokamera | Booking calendar (salons etc.) | unverified | Self-booking, not crew scheduling. |
+| Upflow (Serviq) — [Fortnox](https://www.fortnox.se/integrationer/integration/upflow-en-del-av-serviq-connected-ab/upflow-for-stad-flyttfirmor) | All-in-one for städ/flytt: quotes, scheduling, work orders, Fortnox invoicing, RUT | not checked | Targets the same segment (städ/flytt with RUT and Fortnox). Depth and UX not assessed. |
+| Wisegent — [wisegent.se](https://wisegent.se/se) | Cleaning-specific scheduling, free "AI scheduling", key handling, RUT invoicing | not checked | Targets the same segment; markets free scheduling features. |
+| Bokning & Schema Online (Bird Vision) — [Fortnox](https://www.fortnox.se/integrationer/integration/bird-vision-ab/bokning-schema-online) | Quotes, scheduling, Fortnox invoicing, time reporting | not checked | More generic positioning; not assessed in depth. |
+| Easyserv | Field service / work orders | not checked | Broader field-service scope; less household/RUT focus. |
+| Timewise | Staff scheduling (healthcare, retail) | not checked | Staff scheduling rather than field jobs. |
+| Moment | Projects/time/invoicing for agencies | not checked | Aimed at agencies, a different vertical. |
+| Fieldly | Construction/trades (ROT) | not checked | Aimed at construction/trades (ROT), not RUT. |
+| Bokamera | Booking calendar (salons etc.) | not checked | Booking calendar for self-booking, not crew scheduling. |
 | Bokio / Fortnox / Visma | Accounting with RUT/ROT "husfaktura" ([Fortnox help](https://support.fortnox.se/produkthjalp/fakturering-plus/skapa-husfaktura-rot-rut-och-gront-avdrag)) | low | **Integration target**, no scheduling. |
-| Jobber / Housecall Pro / ServiceM8 | International SMB FSM | ~USD 30–200+/month (unverified) | No RUT, no Fortnox, no Swedish. |
+| Jobber / Housecall Pro / ServiceM8 | International SMB FSM | ~USD 30–200+/month (not checked) | General-purpose international tools; Swedish RUT/Fortnox support not checked. |
 
 **Takeaway:** the niche is **not empty** — Upflow and Wisegent target exactly städ/flytt with RUT and Fortnox. Having the features won't win; execution will: speed, field-first UX, low price, onboarding in under an hour.
 
 ## 4. Differentiation hypothesis
 
-1. **Built for the owner who is in the field:** every manager action (reschedule, cover a sick call, mark done) in under 30 seconds on a phone. Competitors appear desktop-first (unverified).
+1. **Built for the owner who is in the field:** every manager action (reschedule, cover a sick call, mark done) in under 30 seconds on a phone. Competitors may be more desktop-oriented (not verified).
 2. **RUT correct by construction:** automatic labour/material split, local tracking of RUT invoiced by us plus the customer-declared remaining allowance (the system cannot see deductions via other suppliers and cannot guarantee eligibility), missing fields flagged *before* invoicing. Fewer rejections, faster cash.
 3. **Recurring cleaning as a first-class concept:** same cleaner, same customer, every other Tuesday, with holiday/sick exceptions.
 4. **Simple, transparent, low price** with self-service signup — enabled by ~$0 idle infrastructure.
@@ -105,7 +105,7 @@ All need validation; 1 and 2 are the strongest bets.
 
 **Next step:** ~2 weeks of discovery in parallel with the walking skeleton — 5–8 interviews, 3 competitor trials, SCB numbers. No outreach to third parties without Kent's approval.
 
-## 9. Open questions for Kent
+## 9. Open questions
 
-1. Access to real companies for interviews and a pilot? Who is the first design partner?
+1. Access to real companies for interviews and a pilot? Who would be the first design partner?
 2. Brand/name and domain; Swedish-only UI at launch?

@@ -2,17 +2,24 @@
 
 Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 
+## 2026-11-01 — Publish as open source (MIT)
+
+- **Decision:** Make the repository public under the MIT license (`LICENSE`, copyright Backtus, as in the initial commit). Supersedes "Proprietary code" (2026-10-29).
+- **Context:** The project is shelved (see "Project shelved"), so there is no commercial product to protect. The code, ADRs and research may help others (DSQL-safe migrator, OCC retry, CDK-in-Kotlin spike, RUT and Norway regulation research) and show how the factory works. History was checked for secrets, account ids and personal data: none found. All demo data is invented.
+- **Alternatives:** Stay private (the work sits unused); AGPL (deters closed SaaS copies, adds friction for reuse); Apache-2.0 (adds a patent grant).
+- **Consequences:** No support or maintenance promised (README says so). Competitor information is a dated snapshot and carries a caveat. If the project is revived commercially, the code already published stays MIT; only new work could be licensed differently.
+
 ## 2026-10-29 — Project shelved
 
 - **Decision:** Shelve micro-fsm. Keep the repo intact as a reference and as the factory's first case study.
 - **Context:** Kent is not interested in running a cleaning-industry business; he prefers offering the software factory as a service. Free/ad-funded "SaaS 2.0" was considered and rejected (data contains home addresses, door codes and absence times; processor may not reuse it; scale-dependent model conflicts with side-income ambition).
-- **Alternatives:** Norway window-cleaning niche; partnering with the Sundsvall contact.
+- **Alternatives:** Norway window-cleaning niche; partnering with a personal contact in the Swedish market.
 - **Consequences:** No further build or AWS spend. PR #5 closed with branch kept.
 
 ## 2026-10-29 — Sweden head-on paused; investigate Norway
 
 - **Decision:** Stop building toward a head-on Swedish launch. Research Norway (cleaning + window cleaning) before further build or AWS spend.
-- **Context:** Wisegent (Märsta, since 2016) already offers our full Swedish MVP and more (RUT XML, Fortnox partner, native apps, customer portal, autogiro) from 199 SEK/month; Upflow covers the same niche. Kent lives in Trondheim with a network in Norwegian cleaning/window cleaning; Wisegent has no Norwegian language.
+- **Context:** Wisegent (Märsta, since 2016) already offers our full Swedish MVP and more (RUT XML, Fortnox partner, native apps, customer portal, autogiro) from 199 SEK/month; Upflow covers the same niche. Kent has a network in Norwegian cleaning/window cleaning; Wisegent has no Norwegian language.
 - **Alternatives:** Compete in Sweden on UX/price (rejected: 10-year head start, remote founder); shelve product.
 - **Consequences:** PR #5 and AWS setup paused. Domain-neutral assets (backend skeleton, CI, migrator, scheduling UI) are reusable; RUT-specific logic may become Sweden-only.
 
@@ -50,10 +57,10 @@ Newest first. One entry per consequential decision. Evidence: `docs/research/`.
 
 - **Decision:** Side-income micro-SaaS; keep ambition low and achievable. Segment order: home cleaning → move-out cleaning (flyttstädning) → possibly moving. RUT support at XML-file level (Skatteverket upload, schema v6) in MVP; Fortnox integration is the first post-MVP item; Spiris later.
 - **Alternatives:** venture-scale ambition; Fortnox in MVP (rejected).
-- **Context:** Kent's direction. One potential design partner (the person who asked for this) — needs something concrete to see before any promises.
+- **Context:** Kent's direction. One potential design partner — needs something concrete to see before any promises.
 - **Consequences:** Prioritise a showable demo early. Avoid investments that only pay off at scale (partner programmes, sales tooling, BankID).
 
-## 2026-10-29 — Proprietary code
+## 2026-10-29 — Proprietary code (superseded 2026-11-01)
 
 - **Decision:** Removed the MIT license; the code is proprietary (all rights reserved).
 - **Context:** Commercial SaaS.
